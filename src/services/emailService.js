@@ -14,6 +14,16 @@ class EmailService {
             tls: {
                 rejectUnauthorized: false,
             },
+            pool: true,           // reuse connections
+            maxConnections: 3,    // keep up to 3 connections
+            maxMessages: 100,     // messages per connection before reconnecting
+        });
+
+        // Warm up SMTP connection on startup
+        this.transporter.verify().then(() => {
+            console.log('✅ SMTP server connected and ready');
+        }).catch(err => {
+            console.error('⚠️  SMTP connection warning:', err.message);
         });
     }
 
