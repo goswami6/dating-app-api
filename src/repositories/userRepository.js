@@ -1,12 +1,17 @@
-const { User } = require('../models');
+const { User, UserPhoto } = require('../models');
 
 class UserRepository {
     async findAll(options = {}) {
-        return await User.findAll(options);
+        return await User.findAll({
+            ...options,
+            include: [{ model: UserPhoto, as: 'Photos', order: [['sortOrder', 'ASC']] }],
+        });
     }
 
     async findById(id) {
-        return await User.findByPk(id);
+        return await User.findByPk(id, {
+            include: [{ model: UserPhoto, as: 'Photos', order: [['sortOrder', 'ASC']] }],
+        });
     }
 
     async findByEmail(email) {

@@ -5,12 +5,14 @@ const sequelize = require('../config/database');
 const User = require('./userModel');
 const Match = require('./matchModel');
 const Message = require('./messageModel');
+const UserPhoto = require('./userPhotoModel');
 
 // Register all models
 const models = {
     User,
     Match,
     Message,
+    UserPhoto,
 };
 
 // Define associations
@@ -28,6 +30,10 @@ function setupAssociations() {
     // User ↔ Message (sender)
     User.hasMany(Message, { foreignKey: 'senderId', as: 'SentMessages' });
     Message.belongsTo(User, { foreignKey: 'senderId', as: 'Sender' });
+
+    // User ↔ UserPhoto (gallery)
+    User.hasMany(UserPhoto, { foreignKey: 'userId', as: 'Photos' });
+    UserPhoto.belongsTo(User, { foreignKey: 'userId', as: 'Owner' });
 }
 
 setupAssociations();

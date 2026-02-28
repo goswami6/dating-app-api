@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 const authenticate = require('../middleware/authMiddleware');
 
 /**
@@ -53,23 +53,34 @@ const authenticate = require('../middleware/authMiddleware');
  *                 type: integer
  *                 minimum: 18
  *                 maximum: 120
- *                 example: 25
+ *                 example: 26
  *               location:
  *                 type: string
- *                 example: Mumbai, India
+ *                 example: Delhi
  *               bio:
  *                 type: string
- *                 example: Love traveling and music
+ *                 example: Hello world
  *               profilePicture:
  *                 type: string
  *                 format: binary
  *                 description: Profile image (jpeg, png, gif, webp). Max 5MB.
  *               interests:
  *                 type: string
- *                 example: hiking,music,travel
+ *                 description: JSON array as string e.g. '["reading","travel"]'
+ *                 example: '["reading","travel"]'
  *               lookingFor:
  *                 type: string
  *                 example: relationship
+ *               occupation:
+ *                 type: string
+ *                 example: Engineer
+ *               education:
+ *                 type: string
+ *                 example: B.Tech
+ *               preferences:
+ *                 type: string
+ *                 description: JSON object as string e.g. '{"smoking":false,"drinking":true}'
+ *                 example: '{"smoking":false,"drinking":true}'
  *               phoneNumber:
  *                 type: string
  *                 example: '9876543210'

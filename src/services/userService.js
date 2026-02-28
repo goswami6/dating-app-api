@@ -96,6 +96,13 @@ class UserService {
         const { passwordHash, otp, otpExpiry, ...safe } = user.toJSON();
         return safe;
     }
+
+    // ── Full Profile (with photos) ──────────────────────────
+    async getFullProfile(id) {
+        const user = await userRepository.findById(id);
+        if (!user) throw new Error('User not found');
+        return this._sanitize(user);
+    }
 }
 
 module.exports = new UserService();

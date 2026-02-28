@@ -54,12 +54,44 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   interests: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
+    comment: 'Array of interest strings e.g. ["reading","travel"]'
   },
   lookingFor: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  occupation: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  education: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  matchesCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  likesCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  boostsCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  isPremium: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  preferences: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {},
+    comment: 'User preferences e.g. { "smoking": false, "drinking": true }'
   },
   phoneNumber: {
     type: DataTypes.STRING,
