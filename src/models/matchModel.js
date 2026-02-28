@@ -24,8 +24,13 @@ const Match = sequelize.define('Match', {
         }
     },
     status: {
-        type: DataTypes.ENUM('like', 'mutual_match', 'hidden', 'blocked'),
+        type: DataTypes.ENUM('like', 'super_like', 'mutual_match', 'hidden', 'blocked'),
         defaultValue: 'like'
+    },
+    isSuperLike: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        comment: 'Whether this match was initiated via super like'
     },
     matchedAt: {
         type: DataTypes.DATE,

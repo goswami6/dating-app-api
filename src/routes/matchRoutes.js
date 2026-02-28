@@ -67,6 +67,139 @@ router.post('/like', matchController.likeUser);
 
 /**
  * @swagger
+ * /api/matches/super-like:
+ *   post:
+ *     summary: Super like a user
+ *     description: Super like a user. If the other user has already liked/super-liked you, it becomes a mutual match with super like flag.
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - matchedUserId
+ *             properties:
+ *               matchedUserId:
+ *                 type: integer
+ *                 example: 2
+ *                 description: The ID of the user to super like
+ *     responses:
+ *       201:
+ *         description: Super like sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         match:
+ *                           $ref: '#/components/schemas/Match'
+ *                         isMutual:
+ *                           type: boolean
+ *                           example: false
+ *                         isSuperLike:
+ *                           type: boolean
+ *                           example: true
+ *       200:
+ *         description: It's a super match!
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/super-like', matchController.superLikeUser);
+
+/**
+ * @swagger
+ * /api/matches/liked:
+ *   get:
+ *     summary: Get profiles liked by the authenticated user
+ *     description: Returns all profiles that the user has liked (status = 'like'). Once matched, they move to the mutual matches list.
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Liked profiles retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         totalLikes:
+ *                           type: integer
+ *                           example: 5
+ *                         profiles:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/LikedProfile'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/liked', matchController.getLikedProfiles);
+
+/**
+ * @swagger
+ * /api/matches/super-liked:
+ *   get:
+ *     summary: Get profiles super liked by the authenticated user
+ *     description: Returns all profiles that the user has super liked (status = 'super_like'). Once matched, they move to the mutual matches list.
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Super liked profiles retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         totalSuperLikes:
+ *                           type: integer
+ *                           example: 2
+ *                         profiles:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/LikedProfile'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/super-liked', matchController.getSuperLikedProfiles);
+
+/**
+ * @swagger
  * /api/matches:
  *   get:
  *     summary: Get all mutual matches for the authenticated user

@@ -21,6 +21,56 @@ class MatchController {
         }
     }
 
+    // POST /api/matches/super-like
+    async superLikeUser(req, res) {
+        try {
+            const userId = req.user.id;
+            const { matchedUserId } = req.body;
+
+            if (!matchedUserId) {
+                return apiResponse.error(res, 'matchedUserId is required', 400);
+            }
+
+            const result = await matchService.superLikeUser(userId, parseInt(matchedUserId));
+            const statusCode = result.isMutual ? 200 : 201;
+            return apiResponse.success(res, result.message, {
+                match: result.match,
+                isMutual: result.isMutual,
+                isSuperLike: result.isSuperLike
+            }, statusCode);
+        } catch (error) {
+            return apiResponse.error(res, error.message, 400);
+        }
+    }
+
+    // GET /api/matches/liked
+    async getLikedProfiles(req, res) {
+        try {
+            const userId = req.user.id;
+            const profiles = await matchService.getLikedProfiles(userId);
+            return apiResponse.success(res, 'Liked profiles retrieved successfully', {
+                totalLikes: profiles.length,
+                profiles
+            });
+        } catch (error) {
+            return apiResponse.error(res, error.message);
+        }
+    }
+
+    // GET /api/matches/super-liked
+    async getSuperLikedProfiles(req, res) {
+        try {
+            const userId = req.user.id;
+            const profiles = await matchService.getSuperLikedProfiles(userId);
+            return apiResponse.success(res, 'Super liked profiles retrieved successfully', {
+                totalSuperLikes: profiles.length,
+                profiles
+            });
+        } catch (error) {
+            return apiResponse.error(res, error.message);
+        }
+    }
+
     // GET /api/matches
     async getMatches(req, res) {
         try {

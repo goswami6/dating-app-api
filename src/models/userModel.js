@@ -87,6 +87,10 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  isOnline: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   preferences: {
     type: DataTypes.JSON,
     allowNull: true,

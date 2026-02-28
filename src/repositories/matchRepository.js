@@ -1,4 +1,4 @@
-const { Match, User, Message } = require('../models');
+const { Match, User, Message, UserPhoto, Badge } = require('../models');
 const { Op } = require('sequelize');
 
 class MatchRepository {
@@ -52,12 +52,20 @@ class MatchRepository {
                 {
                     model: User,
                     as: 'Initiator',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location']
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    include: [
+                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
+                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
+                    ]
                 },
                 {
                     model: User,
                     as: 'MatchedUser',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location']
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    include: [
+                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
+                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
+                    ]
                 },
                 {
                     model: Message,
@@ -65,6 +73,48 @@ class MatchRepository {
                     limit: 1,
                     order: [['sentAt', 'DESC']],
                     attributes: ['id', 'text', 'senderId', 'sentAt']
+                }
+            ]
+        });
+    }
+
+    async findLikedByUser(userId) {
+        return await Match.findAll({
+            where: {
+                userId,
+                status: 'like'
+            },
+            order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'MatchedUser',
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    include: [
+                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
+                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
+                    ]
+                }
+            ]
+        });
+    }
+
+    async findSuperLikedByUser(userId) {
+        return await Match.findAll({
+            where: {
+                userId,
+                status: 'super_like'
+            },
+            order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'MatchedUser',
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    include: [
+                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
+                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
+                    ]
                 }
             ]
         });

@@ -15,8 +15,9 @@ class MatchService {
         // Check if match already exists in either direction
         const existingMatch = await matchRepository.findByUsers(userId, matchedUserId);
         if (existingMatch) {
-            // If the other user already liked us, upgrade to mutual_match
-            if (existingMatch.userId === matchedUserId && existingMatch.status === 'like') {
+            // If the other user already liked or super_liked us, upgrade to mutual_match
+            if (existingMatch.userId === matchedUserId &&
+                (existingMatch.status === 'like' || existingMatch.status === 'super_like')) {
                 const updated = await matchRepository.update(existingMatch.id, {
                     status: 'mutual_match',
                     matchedAt: new Date(),
@@ -37,6 +38,42 @@ class MatchService {
         return { match, isMutual: false, message: 'Like sent successfully' };
     }
 
+    // ── Super Like a User ───────────────────────────────────
+    async superLikeUser(userId, matchedUserId) {
+        if (userId === matchedUserId) throw new Error('You cannot super like yourself');
+
+        // Check if target user exists
+        const targetUser = await userRepository.findById(matchedUserId);
+        if (!targetUser) throw new Error('Target user not found');
+
+        // Check if match already exists in either direction
+        const existingMatch = await matchRepository.findByUsers(userId, matchedUserId);
+        if (existingMatch) {
+            // If the other user already liked/super_liked us, upgrade to mutual_match
+            if (existingMatch.userId === matchedUserId &&
+                (existingMatch.status === 'like' || existingMatch.status === 'super_like')) {
+                const updated = await matchRepository.update(existingMatch.id, {
+                    status: 'mutual_match',
+                    isSuperLike: true,
+                    matchedAt: new Date(),
+                    isNewMatch: true
+                });
+                return { match: updated, isMutual: true, isSuperLike: true, message: 'It\'s a super match!' };
+            }
+            throw new Error('Match already exists');
+        }
+
+        // Create a new super like
+        const match = await matchRepository.create({
+            userId,
+            matchedUserId,
+            status: 'super_like',
+            isSuperLike: true
+        });
+
+        return { match, isMutual: false, isSuperLike: true, message: 'Super like sent successfully' };
+    }
+
     // ── Get All Matches for User ────────────────────────────
     async getMatchesForUser(userId) {
         const matches = await matchRepository.findMatchesForUser(userId);
@@ -46,8 +83,24 @@ class MatchService {
             const otherUser = m.userId === userId ? m.MatchedUser : m.Initiator;
             const lastMessage = m.Messages.length ? m.Messages[0] : null;
 
+            // Build images array from Photos
+            const images = (otherUser.Photos || []).map(p => p.url);
+            if (images.length === 0 && otherUser.profilePicture) {
+                images.push(otherUser.profilePicture);
+            }
+
+            // Build badges array
+            const badges = (otherUser.Badges || []).map(b => ({
+                id: b.id,
+                name: b.name,
+                icon: b.icon,
+                color: b.color,
+                isPremium: b.isPremium
+            }));
+
             return {
                 matchId: m.id,
+                isSuperLike: m.isSuperLike || false,
                 matchedAt: m.matchedAt,
                 isNewMatch: m.isNewMatch,
                 hasUnreadMessages: m.hasUnreadMessages,
@@ -63,10 +116,67 @@ class MatchService {
                     lastName: otherUser.lastName,
                     age: otherUser.age,
                     profilePicture: otherUser.profilePicture,
-                    location: otherUser.location
+                    images,
+                    location: otherUser.location,
+                    bio: otherUser.bio,
+                    interests: otherUser.interests || [],
+                    isOnline: otherUser.isOnline || false,
+                    occupation: otherUser.occupation,
+                    education: otherUser.education,
+                    badges
                 }
             };
         });
+    }
+
+    // ── Get Liked Profiles ───────────────────────────────
+    async getLikedProfiles(userId) {
+        const likes = await matchRepository.findLikedByUser(userId);
+        return likes.map(m => this._formatUserProfile(m.MatchedUser, m));
+    }
+
+    // ── Get Super Liked Profiles ─────────────────────────────
+    async getSuperLikedProfiles(userId) {
+        const superLikes = await matchRepository.findSuperLikedByUser(userId);
+        return superLikes.map(m => this._formatUserProfile(m.MatchedUser, m));
+    }
+
+    // ── Format User Profile (shared helper) ─────────────────
+    _formatUserProfile(user, match) {
+        const images = (user.Photos || []).map(p => p.url);
+        if (images.length === 0 && user.profilePicture) {
+            images.push(user.profilePicture);
+        }
+
+        const badges = (user.Badges || []).map(b => ({
+            id: b.id,
+            name: b.name,
+            icon: b.icon,
+            color: b.color,
+            isPremium: b.isPremium
+        }));
+
+        return {
+            matchId: match.id,
+            status: match.status,
+            isSuperLike: match.isSuperLike || false,
+            likedAt: match.createdAt,
+            user: {
+                userId: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                age: user.age,
+                profilePicture: user.profilePicture,
+                images,
+                location: user.location,
+                bio: user.bio,
+                interests: user.interests || [],
+                isOnline: user.isOnline || false,
+                occupation: user.occupation,
+                education: user.education,
+                badges
+            }
+        };
     }
 
     // ── Get Match by ID ─────────────────────────────────────

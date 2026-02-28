@@ -6,6 +6,10 @@ const User = require('./userModel');
 const Match = require('./matchModel');
 const Message = require('./messageModel');
 const UserPhoto = require('./userPhotoModel');
+const Badge = require('./badgeModel');
+const UserBadge = require('./userBadgeModel');
+const MatchCriteria = require('./matchCriteriaModel');
+const TopPick = require('./topPickModel');
 
 // Register all models
 const models = {
@@ -13,6 +17,10 @@ const models = {
     Match,
     Message,
     UserPhoto,
+    Badge,
+    UserBadge,
+    MatchCriteria,
+    TopPick,
 };
 
 // Define associations
@@ -34,6 +42,23 @@ function setupAssociations() {
     // User ↔ UserPhoto (gallery)
     User.hasMany(UserPhoto, { foreignKey: 'userId', as: 'Photos' });
     UserPhoto.belongsTo(User, { foreignKey: 'userId', as: 'Owner' });
+
+    // User ↔ Badge (many-to-many through UserBadge)
+    User.belongsToMany(Badge, { through: UserBadge, foreignKey: 'userId', as: 'Badges' });
+    Badge.belongsToMany(User, { through: UserBadge, foreignKey: 'badgeId', as: 'Users' });
+    User.hasMany(UserBadge, { foreignKey: 'userId', as: 'UserBadges' });
+    UserBadge.belongsTo(User, { foreignKey: 'userId' });
+    UserBadge.belongsTo(Badge, { foreignKey: 'badgeId', as: 'Badge' });
+
+    // User ↔ MatchCriteria (one-to-one)
+    User.hasOne(MatchCriteria, { foreignKey: 'userId', as: 'MatchCriteria' });
+    MatchCriteria.belongsTo(User, { foreignKey: 'userId' });
+
+    // User ↔ TopPick
+    User.hasMany(TopPick, { foreignKey: 'userId', as: 'MyTopPicks' });
+    User.hasMany(TopPick, { foreignKey: 'pickedUserId', as: 'PickedByOthers' });
+    TopPick.belongsTo(User, { foreignKey: 'userId', as: 'ForUser' });
+    TopPick.belongsTo(User, { foreignKey: 'pickedUserId', as: 'PickedUser' });
 }
 
 setupAssociations();
