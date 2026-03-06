@@ -1,49 +1,35 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 class EmailService {
 
     constructor() {
-        this.transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: process.env.EMAIL_SECURE === 'true',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD,
-            },
-            tls: {
-                rejectUnauthorized: false,
-            },
-            pool: true,              // reuse connections
-            maxConnections: 3,
-            maxMessages: 100,
-            connectionTimeout: 10000, // 10s to establish connection
-            greetingTimeout: 10000,   // 10s for SMTP greeting
-            socketTimeout: 15000,     // 15s for socket inactivity
-            logger: process.env.NODE_ENV === 'development',
-            debug: process.env.NODE_ENV === 'development',
-        });
+        this.resend = new Resend(process.env.RESEND_API_KEY);
+        this.fromAddress = `${process.env.EMAIL_FROM_NAME || 'Dating App'} <${process.env.EMAIL_FROM_ADDRESS || 'onboarding@resend.dev'}>`;
 
-        // Verify SMTP connection on startup
-        this.transporter.verify().then(() => {
-            console.log('✅ SMTP server connected and ready');
-        }).catch(err => {
-            console.error('⚠️  SMTP connection failed:', err.message);
-            console.error('   Host:', process.env.EMAIL_HOST, '| Port:', process.env.EMAIL_PORT);
-        });
+        if (!process.env.RESEND_API_KEY) {
+            console.error('⚠️  RESEND_API_KEY is not set in .env');
+        } else {
+            console.log('✅ Resend email service initialized (HTTPS API)');
+        }
     }
 
     // ── Send Email ──────────────────────────────────────────
     async sendEmail(to, subject, html) {
-        const mailOptions = {
-            from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            html,
-        };
-
         try {
-            return await this.transporter.sendMail(mailOptions);
+            const { data, error } = await this.resend.emails.send({
+                from: this.fromAddress,
+                to,
+                subject,
+                html,
+            });
+
+            if (error) {
+                console.error('❌ Resend API error:', JSON.stringify(error));
+                throw new Error(`Resend error: ${error.message || error.name}`);
+            }
+
+            console.log('✅ Email sent via Resend:', data?.id);
+            return data;
         } catch (error) {
             console.error('❌ Email send error:', error.message);
             throw new Error('Failed to send email. Please try again later.');
