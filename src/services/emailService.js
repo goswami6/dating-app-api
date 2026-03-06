@@ -37,8 +37,9 @@ class EmailService {
             console.log('✅ Email sent via Resend:', data?.id);
             return data;
         } catch (error) {
-            console.error('❌ Email send error:', error.message);
-            throw new Error('Failed to send email. Please try again later.');
+            console.error('❌ Email send error (full):', error);
+            console.error('❌ Email send error message:', error.message);
+            throw error;
         }
     }
 

@@ -54,7 +54,9 @@ class AuthService {
         try {
             await emailService.sendOtpEmail(user.email, otp, user.firstName);
         } catch (emailErr) {
-            console.error('❌ Failed to send OTP email:', emailErr.message);
+            console.error('❌ RESEND ERROR (full):', emailErr);
+            console.error('❌ RESEND ERROR message:', emailErr.message);
+            console.error('❌ RESEND ERROR response:', JSON.stringify(emailErr.response || emailErr.data || {}, null, 2));
             throw new Error('OTP generated but failed to send email. Please try again.');
         }
 
