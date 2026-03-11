@@ -309,53 +309,6 @@ const options = {
                         expiresAt: { type: 'string', format: 'date-time' },
                     },
                 },
-                LikedProfile: {
-                    type: 'object',
-                    properties: {
-                        matchId: { type: 'integer', example: 5 },
-                        status: { type: 'string', enum: ['like', 'super_like'], example: 'like' },
-                        isSuperLike: { type: 'boolean', example: false },
-                        likedAt: { type: 'string', format: 'date-time' },
-                        user: {
-                            type: 'object',
-                            properties: {
-                                userId: { type: 'integer', example: 3 },
-                                firstName: { type: 'string', example: 'Sarah' },
-                                lastName: { type: 'string', example: 'Smith' },
-                                age: { type: 'integer', example: 25 },
-                                profilePicture: { type: 'string', example: '/uploads/profile-pictures/3-1708800000000.jpg' },
-                                images: {
-                                    type: 'array',
-                                    items: { type: 'string' },
-                                    example: ['/uploads/gallery/3-photo1.jpg', '/uploads/gallery/3-photo2.jpg'],
-                                },
-                                location: { type: 'string', example: 'Mumbai, India' },
-                                bio: { type: 'string', example: 'Adventurer at heart' },
-                                interests: {
-                                    type: 'array',
-                                    items: { type: 'string' },
-                                    example: ['travel', 'photography'],
-                                },
-                                isOnline: { type: 'boolean', example: true },
-                                occupation: { type: 'string', example: 'Photographer' },
-                                education: { type: 'string', example: 'B.FA' },
-                                badges: {
-                                    type: 'array',
-                                    items: {
-                                        type: 'object',
-                                        properties: {
-                                            id: { type: 'integer', example: 1 },
-                                            name: { type: 'string', example: 'Early Bird' },
-                                            icon: { type: 'string', example: '🐦' },
-                                            color: { type: 'string', example: '#FFD700' },
-                                            isPremium: { type: 'boolean', example: false },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
             },
         },
     },

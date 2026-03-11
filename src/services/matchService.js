@@ -129,54 +129,27 @@ class MatchService {
         });
     }
 
-    // ── Get Liked Profiles ───────────────────────────────
-    async getLikedProfiles(userId) {
-        const likes = await matchRepository.findLikedByUser(userId);
-        return likes.map(m => this._formatUserProfile(m.MatchedUser, m));
-    }
+    // ── Get Match Summary (IDs only) ────────────────────────
+    async getMatchSummary(userId) {
+        const records = await matchRepository.findAllForUser(userId);
 
-    // ── Get Super Liked Profiles ─────────────────────────────
-    async getSuperLikedProfiles(userId) {
-        const superLikes = await matchRepository.findSuperLikedByUser(userId);
-        return superLikes.map(m => this._formatUserProfile(m.MatchedUser, m));
-    }
+        const liked = [];
+        const superLiked = [];
+        const matched = [];
 
-    // ── Format User Profile (shared helper) ─────────────────
-    _formatUserProfile(user, match) {
-        const images = (user.Photos || []).map(p => p.url);
-        if (images.length === 0 && user.profilePicture) {
-            images.push(user.profilePicture);
+        for (const r of records) {
+            const otherUserId = r.userId === userId ? r.matchedUserId : r.userId;
+
+            if (r.status === 'mutual_match') {
+                matched.push(otherUserId);
+            } else if (r.userId === userId && r.status === 'like') {
+                liked.push(otherUserId);
+            } else if (r.userId === userId && r.status === 'super_like') {
+                superLiked.push(otherUserId);
+            }
         }
 
-        const badges = (user.Badges || []).map(b => ({
-            id: b.id,
-            name: b.name,
-            icon: b.icon,
-            color: b.color,
-            isPremium: b.isPremium
-        }));
-
-        return {
-            matchId: match.id,
-            status: match.status,
-            isSuperLike: match.isSuperLike || false,
-            likedAt: match.createdAt,
-            user: {
-                userId: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                age: user.age,
-                profilePicture: user.profilePicture,
-                images,
-                location: user.location,
-                bio: user.bio,
-                interests: user.interests || [],
-                isOnline: user.isOnline || false,
-                occupation: user.occupation,
-                education: user.education,
-                badges
-            }
-        };
+        return { liked, superLiked, matched };
     }
 
     // ── Get Match by ID ─────────────────────────────────────

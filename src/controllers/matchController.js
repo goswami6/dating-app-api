@@ -43,29 +43,12 @@ class MatchController {
         }
     }
 
-    // GET /api/matches/liked
-    async getLikedProfiles(req, res) {
+    // GET /api/matches/summary
+    async getMatchSummary(req, res) {
         try {
             const userId = req.user.id;
-            const profiles = await matchService.getLikedProfiles(userId);
-            return apiResponse.success(res, 'Liked profiles retrieved successfully', {
-                totalLikes: profiles.length,
-                profiles
-            });
-        } catch (error) {
-            return apiResponse.error(res, error.message);
-        }
-    }
-
-    // GET /api/matches/super-liked
-    async getSuperLikedProfiles(req, res) {
-        try {
-            const userId = req.user.id;
-            const profiles = await matchService.getSuperLikedProfiles(userId);
-            return apiResponse.success(res, 'Super liked profiles retrieved successfully', {
-                totalSuperLikes: profiles.length,
-                profiles
-            });
+            const summary = await matchService.getMatchSummary(userId);
+            return apiResponse.success(res, 'Match summary retrieved successfully', summary);
         } catch (error) {
             return apiResponse.error(res, error.message);
         }

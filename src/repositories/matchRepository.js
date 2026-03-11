@@ -78,45 +78,15 @@ class MatchRepository {
         });
     }
 
-    async findLikedByUser(userId) {
+    async findAllForUser(userId) {
         return await Match.findAll({
             where: {
-                userId,
-                status: 'like'
+                [Op.or]: [
+                    { userId },
+                    { matchedUserId: userId }
+                ]
             },
-            order: [['createdAt', 'DESC']],
-            include: [
-                {
-                    model: User,
-                    as: 'MatchedUser',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
-                    include: [
-                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
-                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
-                    ]
-                }
-            ]
-        });
-    }
-
-    async findSuperLikedByUser(userId) {
-        return await Match.findAll({
-            where: {
-                userId,
-                status: 'super_like'
-            },
-            order: [['createdAt', 'DESC']],
-            include: [
-                {
-                    model: User,
-                    as: 'MatchedUser',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
-                    include: [
-                        { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
-                        { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
-                    ]
-                }
-            ]
+            attributes: ['id', 'userId', 'matchedUserId', 'status', 'isSuperLike']
         });
     }
 
