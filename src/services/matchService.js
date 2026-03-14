@@ -232,6 +232,25 @@ class MatchService {
         const updated = await matchRepository.update(matchId, { status });
         return updated;
     }
+
+    // ── Unmatch (Delete match + messages) ────────────────────
+    async unmatch(matchId, userId) {
+        const match = await matchRepository.findById(matchId);
+        if (!match) throw new Error('Match not found');
+
+        // Ensure user is part of this match
+        if (match.userId !== userId && match.matchedUserId !== userId) {
+            throw new Error('Unauthorized to unmatch');
+        }
+
+        // Delete all messages for this match
+        await messageRepository.deleteByMatchId(matchId);
+
+        // Delete the match record
+        await matchRepository.delete(matchId);
+
+        return { message: 'Unmatched successfully' };
+    }
 }
 
 module.exports = new MatchService();
