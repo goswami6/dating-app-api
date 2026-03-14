@@ -127,6 +127,18 @@ class MatchController {
             return apiResponse.error(res, error.message, 400);
         }
     }
+
+    // DELETE /api/matches/:matchId/unmatch
+    async unmatch(req, res) {
+        try {
+            const userId = req.user.id;
+            const matchId = parseInt(req.params.matchId);
+            const result = await matchService.unmatch(matchId, userId);
+            return apiResponse.success(res, result.message);
+        } catch (error) {
+            return apiResponse.error(res, error.message, 400);
+        }
+    }
 }
 
 module.exports = new MatchController();

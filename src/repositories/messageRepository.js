@@ -38,6 +38,10 @@ class MessageRepository {
     async count(where = {}) {
         return await Message.count({ where });
     }
+
+    async deleteByMatchId(matchId) {
+        return await Message.destroy({ where: { matchId } });
+    }
 }
 
 module.exports = new MessageRepository();

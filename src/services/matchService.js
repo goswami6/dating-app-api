@@ -215,13 +215,41 @@ class MatchService {
             throw new Error('Unauthorized to update this match');
         }
 
-        const validStatuses = ['hidden', 'blocked'];
+        const validStatuses = ['hidden', 'blocked', 'unhide', 'unblock'];
         if (!validStatuses.includes(status)) {
-            throw new Error('Invalid status. Allowed: hidden, blocked');
+            throw new Error('Invalid status. Allowed: hidden, blocked, unhide, unblock');
+        }
+
+        // unhide/unblock → restore back to mutual_match
+        if (status === 'unhide' || status === 'unblock') {
+            if (match.status === 'mutual_match') {
+                return match; // already active, nothing to change
+            }
+            const updated = await matchRepository.update(matchId, { status: 'mutual_match' });
+            return updated;
         }
 
         const updated = await matchRepository.update(matchId, { status });
         return updated;
+    }
+
+    // ── Unmatch (Delete match + messages) ────────────────────
+    async unmatch(matchId, userId) {
+        const match = await matchRepository.findById(matchId);
+        if (!match) throw new Error('Match not found');
+
+        // Ensure user is part of this match
+        if (match.userId !== userId && match.matchedUserId !== userId) {
+            throw new Error('Unauthorized to unmatch');
+        }
+
+        // Delete all messages for this match
+        await messageRepository.deleteByMatchId(matchId);
+
+        // Delete the match record
+        await matchRepository.delete(matchId);
+
+        return { message: 'Unmatched successfully' };
     }
 }
 

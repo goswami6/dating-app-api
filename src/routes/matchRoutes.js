@@ -365,7 +365,7 @@ router.post('/:matchId/messages', matchController.sendMessage);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [hidden, blocked]
+ *                 enum: [hidden, blocked, unhide, unblock]
  *                 example: hidden
  *     responses:
  *       200:
@@ -387,5 +387,39 @@ router.post('/:matchId/messages', matchController.sendMessage);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch('/:matchId/status', matchController.updateStatus);
+
+/**
+ * @swagger
+ * /api/matches/{matchId}/unmatch:
+ *   delete:
+ *     summary: Unmatch a user
+ *     description: Permanently removes the match and deletes all messages in the conversation. This action cannot be undone.
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Match ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Unmatched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.delete('/:matchId/unmatch', matchController.unmatch);
 
 module.exports = router;
