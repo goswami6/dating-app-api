@@ -13,6 +13,7 @@ const discoveryRoutes = require('./discoveryRoutes');
 const swipeRoutes = require('./swipeRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const subscriptionRoutes = require('./subscriptionRoutes');
+const messageRoutes = require('./messageRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -26,5 +27,6 @@ router.use('/discovery', discoveryRoutes);
 router.use('/swipes', swipeRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/messages', messageRoutes);
 
 module.exports = router;

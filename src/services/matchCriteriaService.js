@@ -14,7 +14,25 @@ class MatchCriteriaService {
                 interests: [],
                 gender: 'all',
                 onlineOnly: false,
-                incognitoMode: false
+                incognitoMode: false,
+                relationshipGoals: [],
+                pronouns: [],
+                height: null,
+                languages: [],
+                zodiacSign: null,
+                educationLevel: null,
+                familyPlan: null,
+                communicationStyle: null,
+                loveStyle: null,
+                petPreference: null,
+                drinking: null,
+                smoking: null,
+                workout: null,
+                socialMedia: null,
+                school: null,
+                jobTitle: null,
+                livingIn: null,
+                sexualOrientation: []
             };
         }
         return criteria;
@@ -32,7 +50,13 @@ class MatchCriteriaService {
             throw new Error('Max distance must be greater than 0');
         }
 
-        const allowedFields = ['minAge', 'maxAge', 'maxDistance', 'interests', 'gender', 'onlineOnly', 'incognitoMode'];
+        const allowedFields = [
+            'minAge', 'maxAge', 'maxDistance', 'interests', 'gender', 'onlineOnly', 'incognitoMode',
+            'relationshipGoals', 'pronouns', 'height', 'languages', 'zodiacSign',
+            'educationLevel', 'familyPlan', 'communicationStyle', 'loveStyle',
+            'petPreference', 'drinking', 'smoking', 'workout', 'socialMedia',
+            'school', 'jobTitle', 'livingIn', 'sexualOrientation'
+        ];
         const filtered = {};
         for (const key of allowedFields) {
             if (data[key] !== undefined) {

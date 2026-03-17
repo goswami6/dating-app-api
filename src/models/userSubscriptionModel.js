@@ -34,6 +34,10 @@ const UserSubscription = sequelize.define('UserSubscription', {
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'expired', 'cancelled'),
+    defaultValue: 'active'
   }
 }, {
   tableName: 'user_subscriptions',

@@ -45,6 +45,10 @@ function setupAssociations() {
     User.hasMany(Message, { foreignKey: 'senderId', as: 'SentMessages' });
     Message.belongsTo(User, { foreignKey: 'senderId', as: 'Sender' });
 
+    // Message ↔ Message (reply)
+    Message.belongsTo(Message, { foreignKey: 'replyToId', as: 'ReplyTo' });
+    Message.hasMany(Message, { foreignKey: 'replyToId', as: 'Replies' });
+
     // User ↔ UserPhoto (gallery)
     User.hasMany(UserPhoto, { foreignKey: 'userId', as: 'Photos' });
     UserPhoto.belongsTo(User, { foreignKey: 'userId', as: 'Owner' });

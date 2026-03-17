@@ -1,0 +1,8 @@
+node_modules/
+.env
+uploads/gallery/*
+uploads/profile-pictures/*
+!uploads/gallery/.gitkeep
+!uploads/profile-pictures/.gitkeep
+*.log
+.DS_Store

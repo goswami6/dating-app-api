@@ -51,6 +51,100 @@ const MatchCriteria = sequelize.define('MatchCriteria', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         comment: 'Hide profile from discovery'
+    },
+    relationshipGoals: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: 'Array of relationship goals with title/icon'
+    },
+    pronouns: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: 'Array of pronouns'
+    },
+    height: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Height as text (e.g. 5\'8\")'
+    },
+    languages: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: 'Array of languages'
+    },
+    zodiacSign: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Zodiac sign'
+    },
+    educationLevel: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Education level'
+    },
+    familyPlan: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Family plan option'
+    },
+    communicationStyle: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Communication style'
+    },
+    loveStyle: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Love style'
+    },
+    petPreference: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Pet preference'
+    },
+    drinking: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Drinking option'
+    },
+    smoking: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Smoking option'
+    },
+    workout: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Workout frequency'
+    },
+    socialMedia: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Social media usage'
+    },
+    school: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'School name (text)'
+    },
+    jobTitle: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Job title (text)'
+    },
+    livingIn: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Living in (location)'
+    },
+    sexualOrientation: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: 'Array of sexual orientation objects (title/description)'
     }
 }, {
     tableName: 'match_criteria',
