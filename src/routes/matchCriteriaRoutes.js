@@ -4,7 +4,6 @@ const matchCriteriaController = require('../controllers/matchCriteriaController'
 const authMiddleware = require('../middleware/authMiddleware');
 
 // All match-criteria routes require authentication
-router.use(authMiddleware);
 
 /**
  * @swagger
@@ -12,6 +11,67 @@ router.use(authMiddleware);
  *   name: MatchCriteria
  *   description: Match criteria / preference endpoints
  */
+
+/**
+ * @swagger
+ * /api/match-criteria/options:
+ *   get:
+ *     summary: Get all match criteria dropdown options
+ *     description: Returns all available options for match criteria fields (relationship goals, pronouns, languages, zodiac signs, education levels, etc.). No authentication required.
+ *     tags: [MatchCriteria]
+ *     security:
+ *       - apiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: All match criteria options
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         relationship_goals:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               title:
+ *                                 type: string
+ *                               icon:
+ *                                 type: string
+ *                         pronouns:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         languages:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         zodiac_signs:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         education_levels:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         sexual_orientations:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               title:
+ *                                 type: string
+ *                               description:
+ *                                 type: string
+ */
+router.get('/options', matchCriteriaController.getOptions);
+
+router.use(authMiddleware);
 
 /**
  * @swagger

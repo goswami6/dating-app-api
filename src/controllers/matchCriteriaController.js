@@ -1,7 +1,17 @@
 const matchCriteriaService = require('../services/matchCriteriaService');
+const matchCriteriaOptions = require('../config/matchCriteriaOptions');
 const apiResponse = require('../utils/apiResponse');
 
 class MatchCriteriaController {
+
+    // GET /api/match-criteria/options
+    async getOptions(req, res) {
+        try {
+            return apiResponse.success(res, 'Match criteria options retrieved', matchCriteriaOptions);
+        } catch (error) {
+            return apiResponse.error(res, error.message);
+        }
+    }
 
     // GET /api/match-criteria
     async getCriteria(req, res) {
