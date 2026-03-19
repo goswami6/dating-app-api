@@ -251,6 +251,19 @@ class MatchService {
 
         return { message: 'Unmatched successfully' };
     }
+
+    // GET /api/matches/blocked — get all blocked users
+    async getBlockedUsers(userId) {
+        const blocked = await matchRepository.findBlockedUsers(userId);
+        return blocked.map(match => {
+            const blockedUser = match.userId === userId ? match.MatchedUser : match.Initiator;
+            return {
+                matchId: match.id,
+                blockedUser,
+                blockedAt: match.updatedAt
+            };
+        });
+    }
 }
 
 module.exports = new MatchService();

@@ -123,6 +123,31 @@ class MatchRepository {
     async count(where = {}) {
         return await Match.count({ where });
     }
+
+    async findBlockedUsers(userId) {
+        return await Match.findAll({
+            where: {
+                status: 'blocked',
+                [Op.or]: [
+                    { userId },
+                    { matchedUserId: userId }
+                ]
+            },
+            order: [['updatedAt', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'Initiator',
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location']
+                },
+                {
+                    model: User,
+                    as: 'MatchedUser',
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location']
+                }
+            ]
+        });
+    }
 }
 
 module.exports = new MatchRepository();

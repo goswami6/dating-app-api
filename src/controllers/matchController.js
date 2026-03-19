@@ -139,6 +139,17 @@ class MatchController {
             return apiResponse.error(res, error.message, 400);
         }
     }
+
+    // GET /api/matches/blocked
+    async getBlockedUsers(req, res) {
+        try {
+            const userId = req.user.id;
+            const blockedUsers = await matchService.getBlockedUsers(userId);
+            return apiResponse.success(res, 'Blocked users retrieved', { total: blockedUsers.length, blockedUsers });
+        } catch (error) {
+            return apiResponse.error(res, error.message);
+        }
+    }
 }
 
 module.exports = new MatchController();
