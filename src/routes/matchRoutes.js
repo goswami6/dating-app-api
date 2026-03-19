@@ -211,60 +211,6 @@ router.get('/', matchController.getMatches);
 
 /**
  * @swagger
- * /api/matches/blocked:
- *   get:
- *     summary: Get all blocked users
- *     description: Returns a list of all users that the authenticated user has blocked
- *     tags: [Matches]
- *     security:
- *       - bearerAuth: []
- *       - apiKeyAuth: []
- *     responses:
- *       200:
- *         description: Blocked users retrieved
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         total:
- *                           type: integer
- *                           example: 2
- *                         blockedUsers:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               matchId:
- *                                 type: integer
- *                               blockedUser:
- *                                 type: object
- *                                 properties:
- *                                   id:
- *                                     type: integer
- *                                   firstName:
- *                                     type: string
- *                                   lastName:
- *                                     type: string
- *                                   profilePicture:
- *                                     type: string
- *                                   age:
- *                                     type: integer
- *                                   location:
- *                                     type: string
- *                               blockedAt:
- *                                 type: string
- *                                 format: date-time
- */
-router.get('/blocked', matchController.getBlockedUsers);
-
-/**
- * @swagger
  * /api/matches/{matchId}:
  *   get:
  *     summary: Get a specific match with messages

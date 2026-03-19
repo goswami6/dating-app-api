@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const http = require('http');
+const { Server } = require('socket.io');
 const { sequelize } = require('./src/models');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -12,8 +14,22 @@ const path = require('path');
 const swaggerSpec = require('./src/config/swagger');
 const routes = require('./src/routes');
 const { initializeDatabase, syncDatabaseSchema } = require('./syncDatabase');
+const { setupSocketHandlers } = require('./src/socket/callSocket');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST'],
+    },
+});
+
+// Make io accessible to controllers via req.app.get('io')
+app.set('io', io);
+
+// Setup Socket.IO call signaling handlers
+setupSocketHandlers(io);
 
 app.use(express.json());
 app.use(helmet());
@@ -50,9 +66,10 @@ sequelize.authenticate()
 
         console.log('Database schema synced.');
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server running at ${HOST_URL}`);
             console.log(`Swagger docs at ${HOST_URL}/api-docs`);
+            console.log(`Socket.IO ready for calls`);
         });
     })
     .catch(async (err) => {
@@ -63,9 +80,10 @@ sequelize.authenticate()
             await initializeDatabase();
             console.log('Database initialized successfully. Starting server...');
 
-            app.listen(PORT, () => {
+            server.listen(PORT, () => {
                 console.log(`Server running at ${HOST_URL}`);
                 console.log(`Swagger docs at ${HOST_URL}/api-docs`);
+                console.log(`Socket.IO ready for calls`);
             });
         } catch (syncErr) {
             console.error('Failed to initialize database:', syncErr.message);

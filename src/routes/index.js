@@ -14,6 +14,7 @@ const swipeRoutes = require('./swipeRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const subscriptionRoutes = require('./subscriptionRoutes');
 const messageRoutes = require('./messageRoutes');
+const callRoutes = require('./callRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -28,5 +29,6 @@ router.use('/swipes', swipeRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/messages', messageRoutes);
+router.use('/calls', callRoutes);
 
 module.exports = router;

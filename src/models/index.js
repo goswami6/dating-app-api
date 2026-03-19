@@ -13,6 +13,7 @@ const TopPick = require('./topPickModel');
 const Notification = require('./notificationModel');
 const SubscriptionPlan = require('./subscriptionPlanModel');
 const Subscription = require('./userSubscriptionModel');
+const Call = require('./callModel');
 
 // Register all models
 const models = {
@@ -27,6 +28,7 @@ const models = {
     Notification,
     SubscriptionPlan,
     Subscription,
+    Call,
 };
 
 // Define associations
@@ -81,6 +83,16 @@ function setupAssociations() {
     // SubscriptionPlan ↔ Subscription
     SubscriptionPlan.hasMany(Subscription, { foreignKey: 'planId', as: 'Subscriptions' });
     Subscription.belongsTo(SubscriptionPlan, { foreignKey: 'planId', as: 'Plan' });
+
+    // User ↔ Call
+    User.hasMany(Call, { foreignKey: 'callerId', as: 'OutgoingCalls' });
+    User.hasMany(Call, { foreignKey: 'receiverId', as: 'IncomingCalls' });
+    Call.belongsTo(User, { foreignKey: 'callerId', as: 'Caller' });
+    Call.belongsTo(User, { foreignKey: 'receiverId', as: 'Receiver' });
+
+    // Match ↔ Call
+    Match.hasMany(Call, { foreignKey: 'matchId', as: 'Calls' });
+    Call.belongsTo(Match, { foreignKey: 'matchId' });
 }
 
 setupAssociations();

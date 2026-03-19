@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const { DataTypes } = require('sequelize');
 require('dotenv').config();
 
-const { sequelize, MatchCriteria, Message, Subscription } = require('./src/models');
+const { sequelize, MatchCriteria, Message, Subscription, Call } = require('./src/models');
 
 async function ensureMatchCriteriaColumns() {
     const queryInterface = sequelize.getQueryInterface();
@@ -178,6 +178,7 @@ async function syncDatabaseSchema() {
     await ensureMatchCriteriaColumns();
     await Message.sync({ alter: true });
     await Subscription.sync({ alter: true });
+    await Call.sync({ alter: true });
 }
 
 async function initializeDatabase() {
