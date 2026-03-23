@@ -57,20 +57,28 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 const HOST_URL = process.env.HOST_URL || `http://localhost:${PORT}`;
 
+const startServer = () => {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running at ${HOST_URL}`);
+        console.log(`Swagger docs at ${HOST_URL}/api-docs`);
+        console.log(`Socket.IO ready for calls`);
+    });
+};
+
 sequelize.authenticate()
     .then(async () => {
         console.log('Connected to MySQL Database');
         console.log('Syncing database schema...');
 
-        await syncDatabaseSchema();
+        try {
+            await syncDatabaseSchema();
+            console.log('Database schema synced.');
+        } catch (syncErr) {
+            console.error('Schema sync warning:', syncErr.message);
+            console.log('Continuing with existing schema...');
+        }
 
-        console.log('Database schema synced.');
-
-        server.listen(PORT, () => {
-            console.log(`Server running at ${HOST_URL}`);
-            console.log(`Swagger docs at ${HOST_URL}/api-docs`);
-            console.log(`Socket.IO ready for calls`);
-        });
+        startServer();
     })
     .catch(async (err) => {
         console.error('MySQL connection error:', err.message);
@@ -79,12 +87,7 @@ sequelize.authenticate()
         try {
             await initializeDatabase();
             console.log('Database initialized successfully. Starting server...');
-
-            server.listen(PORT, () => {
-                console.log(`Server running at ${HOST_URL}`);
-                console.log(`Swagger docs at ${HOST_URL}/api-docs`);
-                console.log(`Socket.IO ready for calls`);
-            });
+            startServer();
         } catch (syncErr) {
             console.error('Failed to initialize database:', syncErr.message);
             process.exit(1);

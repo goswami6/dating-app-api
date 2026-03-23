@@ -15,6 +15,12 @@ const notificationRoutes = require('./notificationRoutes');
 const subscriptionRoutes = require('./subscriptionRoutes');
 const messageRoutes = require('./messageRoutes');
 const callRoutes = require('./callRoutes');
+const shopCategoryRoutes = require('./shopCategoryRoutes');
+const shopProductRoutes = require('./shopProductRoutes');
+const shopCartRoutes = require('./shopCartRoutes');
+const shopWishlistRoutes = require('./shopWishlistRoutes');
+const shopAddressRoutes = require('./shopAddressRoutes');
+const shopOrderRoutes = require('./shopOrderRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -30,5 +36,11 @@ router.use('/notifications', notificationRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/messages', messageRoutes);
 router.use('/calls', callRoutes);
+router.use('/shop/categories', shopCategoryRoutes);
+router.use('/shop/products', shopProductRoutes);
+router.use('/shop/cart', shopCartRoutes);
+router.use('/shop/wishlist', shopWishlistRoutes);
+router.use('/shop/addresses', shopAddressRoutes);
+router.use('/shop/orders', shopOrderRoutes);
 
 module.exports = router;

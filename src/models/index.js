@@ -14,6 +14,12 @@ const Notification = require('./notificationModel');
 const SubscriptionPlan = require('./subscriptionPlanModel');
 const Subscription = require('./userSubscriptionModel');
 const Call = require('./callModel');
+const ShopCategory = require('./shopCategoryModel');
+const ShopProduct = require('./shopProductModel');
+const ShopCart = require('./shopCartModel');
+const ShopWishlist = require('./shopWishlistModel');
+const ShopAddress = require('./shopAddressModel');
+const { ShopOrder, ShopOrderItem } = require('./shopOrderModel');
 
 // Register all models
 const models = {
@@ -29,6 +35,13 @@ const models = {
     SubscriptionPlan,
     Subscription,
     Call,
+    ShopCategory,
+    ShopProduct,
+    ShopCart,
+    ShopWishlist,
+    ShopAddress,
+    ShopOrder,
+    ShopOrderItem,
 };
 
 // Define associations
@@ -93,6 +106,45 @@ function setupAssociations() {
     // Match ↔ Call
     Match.hasMany(Call, { foreignKey: 'matchId', as: 'Calls' });
     Call.belongsTo(Match, { foreignKey: 'matchId' });
+
+    // Shop: Category self-referencing (parent/child)
+    ShopCategory.hasMany(ShopCategory, { foreignKey: 'parentId', as: 'SubCategories' });
+    ShopCategory.belongsTo(ShopCategory, { foreignKey: 'parentId', as: 'Parent' });
+
+    // Shop: Category ↔ Product
+    ShopCategory.hasMany(ShopProduct, { foreignKey: 'categoryId', as: 'Products' });
+    ShopProduct.belongsTo(ShopCategory, { foreignKey: 'categoryId', as: 'Category' });
+
+    // Shop: User ↔ Cart
+    User.hasMany(ShopCart, { foreignKey: 'userId', as: 'CartItems' });
+    ShopCart.belongsTo(User, { foreignKey: 'userId' });
+    ShopProduct.hasMany(ShopCart, { foreignKey: 'productId' });
+    ShopCart.belongsTo(ShopProduct, { foreignKey: 'productId', as: 'Product' });
+
+    // Shop: User ↔ Wishlist
+    User.hasMany(ShopWishlist, { foreignKey: 'userId', as: 'WishlistItems' });
+    ShopWishlist.belongsTo(User, { foreignKey: 'userId' });
+    ShopProduct.hasMany(ShopWishlist, { foreignKey: 'productId' });
+    ShopWishlist.belongsTo(ShopProduct, { foreignKey: 'productId', as: 'Product' });
+
+    // Shop: User ↔ Address
+    User.hasMany(ShopAddress, { foreignKey: 'userId', as: 'Addresses' });
+    ShopAddress.belongsTo(User, { foreignKey: 'userId' });
+
+    // Shop: User ↔ Order
+    User.hasMany(ShopOrder, { foreignKey: 'userId', as: 'Orders' });
+    ShopOrder.belongsTo(User, { foreignKey: 'userId' });
+
+    // Shop: Order ↔ Address
+    ShopOrder.belongsTo(ShopAddress, { foreignKey: 'addressId', as: 'Address' });
+
+    // Shop: Order ↔ OrderItem
+    ShopOrder.hasMany(ShopOrderItem, { foreignKey: 'orderId', as: 'Items' });
+    ShopOrderItem.belongsTo(ShopOrder, { foreignKey: 'orderId' });
+
+    // Shop: OrderItem ↔ Product
+    ShopOrderItem.belongsTo(ShopProduct, { foreignKey: 'productId', as: 'Product' });
+    ShopProduct.hasMany(ShopOrderItem, { foreignKey: 'productId' });
 }
 
 setupAssociations();

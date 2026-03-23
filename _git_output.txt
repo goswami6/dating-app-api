@@ -1,0 +1,24 @@
+=== GIT STATUS === 
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   _git_output.txt
+	modified:   _push.bat
+	modified:   server.js
+	modified:   syncDatabase.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+=== GIT ADD === 
+warning: in the working copy of '_git_output.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'syncDatabase.js', LF will be replaced by CRLF the next time Git touches it
+=== GIT COMMIT === 
+[main 43bfd84] Fix: Too many keys MySQL error and Render port binding
+ 4 files changed, 31 insertions(+), 28 deletions(-)
+=== GIT PUSH === 
+To https://github.com/goswami6/dating-app-api.git
+   d2a8b98..43bfd84  main -> main
+=== DONE === 
