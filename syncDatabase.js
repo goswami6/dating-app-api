@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const { DataTypes } = require('sequelize');
 require('dotenv').config();
 
-const { sequelize, MatchCriteria, Message, Subscription, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem } = require('./src/models');
+const { sequelize, MatchCriteria, Message, Subscription, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction } = require('./src/models');
 
 async function ensureMatchCriteriaColumns() {
     const queryInterface = sequelize.getQueryInterface();
@@ -186,6 +186,8 @@ async function syncDatabaseSchema() {
     await ShopAddress.sync();
     await ShopOrder.sync();
     await ShopOrderItem.sync();
+    await Wallet.sync();
+    await WalletTransaction.sync();
 }
 
 async function seedCategoriesAndProducts() {

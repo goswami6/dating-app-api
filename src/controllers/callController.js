@@ -1,4 +1,5 @@
 const callService = require('../services/callService');
+const walletService = require('../services/walletService');
 const apiResponse = require('../utils/apiResponse');
 
 class CallController {
@@ -12,6 +13,19 @@ class CallController {
       }
       if (!['voice', 'video'].includes(callType)) {
         return apiResponse.error(res, 'callType must be voice or video', 400);
+      }
+
+      // Check wallet balance before initiating call
+      const canCall = await walletService.canCall(callerId, callType);
+      if (!canCall) {
+        const wallet = await walletService.getWallet(callerId);
+        const rates = walletService.getRates();
+        const ratePerMinute = callType === 'video' ? rates.videoCallPerMinute : rates.voiceCallPerMinute;
+        return apiResponse.error(res, 'Insufficient wallet balance for call. Please recharge your wallet.', 402, {
+          balance: wallet.balance,
+          ratePerMinute,
+          currency: wallet.currency
+        });
       }
 
       const result = await callService.initiateCall(callerId, receiverId, matchId, callType);
@@ -76,6 +90,21 @@ class CallController {
       const userId = req.user.id;
       const callId = parseInt(req.params.callId);
       const call = await callService.endCall(callId, userId);
+
+      // Deduct wallet balance based on call duration
+      if (call.duration > 0 && call.callerId === userId) {
+        const durationMinutes = call.duration / 60;
+        const otherUserId = call.callerId === userId ? call.receiverId : call.callerId;
+        try {
+          if (call.callType === 'video') {
+            await walletService.deductForVideoCall(userId, otherUserId, durationMinutes);
+          } else {
+            await walletService.deductForVoiceCall(userId, otherUserId, durationMinutes);
+          }
+        } catch (deductErr) {
+          console.error('Wallet deduction failed for call:', deductErr.message);
+        }
+      }
 
       const io = req.app.get('io');
       if (io) {

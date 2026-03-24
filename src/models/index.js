@@ -20,6 +20,8 @@ const ShopCart = require('./shopCartModel');
 const ShopWishlist = require('./shopWishlistModel');
 const ShopAddress = require('./shopAddressModel');
 const { ShopOrder, ShopOrderItem } = require('./shopOrderModel');
+const Wallet = require('./walletModel');
+const WalletTransaction = require('./walletTransactionModel');
 
 // Register all models
 const models = {
@@ -42,6 +44,8 @@ const models = {
     ShopAddress,
     ShopOrder,
     ShopOrderItem,
+    Wallet,
+    WalletTransaction,
 };
 
 // Define associations
@@ -145,6 +149,18 @@ function setupAssociations() {
     // Shop: OrderItem ↔ Product
     ShopOrderItem.belongsTo(ShopProduct, { foreignKey: 'productId', as: 'Product' });
     ShopProduct.hasMany(ShopOrderItem, { foreignKey: 'productId' });
+
+    // Wallet: User ↔ Wallet (one-to-one)
+    User.hasOne(Wallet, { foreignKey: 'userId', as: 'Wallet' });
+    Wallet.belongsTo(User, { foreignKey: 'userId' });
+
+    // Wallet: Wallet ↔ WalletTransaction
+    Wallet.hasMany(WalletTransaction, { foreignKey: 'walletId', as: 'Transactions' });
+    WalletTransaction.belongsTo(Wallet, { foreignKey: 'walletId' });
+
+    // Wallet: User ↔ WalletTransaction
+    User.hasMany(WalletTransaction, { foreignKey: 'userId', as: 'WalletTransactions' });
+    WalletTransaction.belongsTo(User, { foreignKey: 'userId' });
 }
 
 setupAssociations();
