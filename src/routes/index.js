@@ -22,6 +22,7 @@ const shopWishlistRoutes = require('./shopWishlistRoutes');
 const shopAddressRoutes = require('./shopAddressRoutes');
 const shopOrderRoutes = require('./shopOrderRoutes');
 const walletRoutes = require('./walletRoutes');
+const onlineUsersRoutes = require('./onlineUsersRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -44,5 +45,6 @@ router.use('/shop/wishlist', shopWishlistRoutes);
 router.use('/shop/addresses', shopAddressRoutes);
 router.use('/shop/orders', shopOrderRoutes);
 router.use('/wallet', walletRoutes);
+router.use('/online-users', onlineUsersRoutes);
 
 module.exports = router;

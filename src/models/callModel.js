@@ -9,7 +9,7 @@ const Call = sequelize.define('Call', {
   },
   matchId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
   },
   callerId: {
     type: DataTypes.INTEGER,

@@ -81,9 +81,51 @@ function setupSocketHandlers(io) {
       }
     });
 
+    // ─── Random Chat (Online Users) ───
+
+    // Send a message in random chat (real-time delivery)
+    socket.on('random-chat:message', async ({ chatId, text, receiverId }) => {
+      // Emit to receiver in real-time
+      io.to(`user_${receiverId}`).emit('random-chat:message', {
+        chatId,
+        senderId: userId,
+        text,
+        sentAt: new Date().toISOString(),
+      });
+    });
+
+    // Typing indicator for random chat
+    socket.on('random-chat:typing', ({ chatId, receiverId }) => {
+      io.to(`user_${receiverId}`).emit('random-chat:typing', {
+        chatId,
+        userId,
+      });
+    });
+
+    // Stop typing indicator
+    socket.on('random-chat:stop-typing', ({ chatId, receiverId }) => {
+      io.to(`user_${receiverId}`).emit('random-chat:stop-typing', {
+        chatId,
+        userId,
+      });
+    });
+
+    // Message read acknowledgement
+    socket.on('random-chat:read', ({ chatId, receiverId }) => {
+      io.to(`user_${receiverId}`).emit('random-chat:read', {
+        chatId,
+        readBy: userId,
+      });
+    });
+
+    // Broadcast online status to connected users
+    io.emit('user:online', { userId });
+
+
     // Handle disconnect — end any active call
     socket.on('disconnect', async () => {
       connectedUsers.delete(userId);
+      io.emit('user:offline', { userId });
       console.log(`User ${userId} disconnected`);
 
       try {
