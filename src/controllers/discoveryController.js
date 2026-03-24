@@ -3,6 +3,16 @@ const apiResponse = require('../utils/apiResponse');
 
 class DiscoveryController {
 
+  // GET /api/discovery/filters
+  async getFilters(req, res) {
+    try {
+      const filters = discoveryService.getFilters();
+      return apiResponse.success(res, 'Discovery filters retrieved successfully', filters);
+    } catch (error) {
+      return apiResponse.error(res, error.message);
+    }
+  }
+
   // GET /api/discovery/users
   async getDiscoverableUsers(req, res) {
     try {

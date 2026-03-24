@@ -1,7 +1,59 @@
 const { User, UserPhoto, Badge, Match, MatchCriteria } = require('../models');
 const { Op } = require('sequelize');
 
+// ── Static Filter Options ─────────────────────────────
+const DISCOVERY_FILTERS = {
+  relationship_goals: [
+    { title: 'Long-term partner', icon: '💕' },
+    { title: 'Long-term, open to short', icon: '😍' },
+    { title: 'Short-term, open to long', icon: '🥂' },
+    { title: 'Short-term fun', icon: '🎉' },
+    { title: 'New friends', icon: '👋' },
+    { title: 'Still figuring it out', icon: '🤔' },
+    { title: 'Friendship', icon: '🤝' },
+    { title: 'Love', icon: '❤️' }
+  ],
+  zodiac_signs: [
+    'Capricorn', 'Aquarius', 'Pisces', 'Aries', 'Taurus', 'Gemini',
+    'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius'
+  ],
+  education_levels: [
+    'High School', 'Bachelors', 'Masters', 'Ph.D.', 'Trade School', 'In college', 'In grad school'
+  ],
+  family_plan_options: [
+    'I want children', "I don't want children", 'I have children and want more',
+    "I have children and don't want more", 'Not sure yet'
+  ],
+  communication_styles: [
+    'Phone caller', 'Video chatter', "I'm slow to answer on WhatsApp", 'Bad texter', 'Better in person'
+  ],
+  love_styles: [
+    'Thoughtful gestures', 'Presents', 'Touch', 'Compliments', 'Time together'
+  ],
+  pet_options: [
+    'Dog', 'Cat', 'Reptile', 'Amphibian', 'Bird', 'Fish', "Don't have but love", 'Other',
+    'Turtle', 'Hamster', 'Rabbit', 'Pet-free', 'All the pets', 'Want a pet', 'Allergic to pets'
+  ],
+  drinking_options: [
+    'Not for me', 'Sober', 'Sober curious', 'On special occasions', 'Socially on weekends', 'Most Nights'
+  ],
+  smoking_options: [
+    'Social smoker', 'Smoker when drinking', 'Non-smoker', 'Smoker', 'Trying to quit'
+  ],
+  workout: [
+    'Everyday', 'Often', 'Sometimes', 'Never'
+  ],
+  social_media_options: [
+    'Influencer status', 'Socially active', 'Off the grid', 'Passive scroller'
+  ]
+};
+
 class DiscoveryService {
+
+  // ── Get all filter options ──────────────────────────────
+  getFilters() {
+    return DISCOVERY_FILTERS;
+  }
 
   // ── Get users for swipe screen ──────────────────────────
   async getDiscoverableUsers(userId, query = {}) {
@@ -60,6 +112,74 @@ class DiscoveryService {
     // Online-only filter
     if (prefs.onlineOnly) {
       where.isOnline = true;
+    }
+
+    // ── Advanced filters from query params ──
+    const criteriaWhere = {};
+
+    // Relationship goals filter (JSON array contains value)
+    if (query.relationshipGoal) {
+      criteriaWhere.relationshipGoals = { [Op.like]: `%${query.relationshipGoal}%` };
+    }
+    // Zodiac sign filter
+    if (query.zodiacSign) {
+      criteriaWhere.zodiacSign = query.zodiacSign;
+    }
+    // Education level filter
+    if (query.educationLevel) {
+      criteriaWhere.educationLevel = query.educationLevel;
+    }
+    // Family plan filter
+    if (query.familyPlan) {
+      criteriaWhere.familyPlan = query.familyPlan;
+    }
+    // Communication style filter
+    if (query.communicationStyle) {
+      criteriaWhere.communicationStyle = query.communicationStyle;
+    }
+    // Love style filter
+    if (query.loveStyle) {
+      criteriaWhere.loveStyle = query.loveStyle;
+    }
+    // Pet preference filter
+    if (query.petPreference) {
+      criteriaWhere.petPreference = query.petPreference;
+    }
+    // Drinking filter
+    if (query.drinking) {
+      criteriaWhere.drinking = query.drinking;
+    }
+    // Smoking filter
+    if (query.smoking) {
+      criteriaWhere.smoking = query.smoking;
+    }
+    // Workout filter
+    if (query.workout) {
+      criteriaWhere.workout = query.workout;
+    }
+    // Social media filter
+    if (query.socialMedia) {
+      criteriaWhere.socialMedia = query.socialMedia;
+    }
+
+    // If any advanced filters, get matching user IDs from MatchCriteria
+    const hasAdvancedFilters = Object.keys(criteriaWhere).length > 0;
+    if (hasAdvancedFilters) {
+      const matchingCriteria = await MatchCriteria.findAll({
+        where: criteriaWhere,
+        attributes: ['userId']
+      });
+      const filteredUserIds = matchingCriteria.map(mc => mc.userId);
+      if (filteredUserIds.length === 0) {
+        return { profiles: [], pagination: { page, limit, total: 0, totalPages: 0 } };
+      }
+      // Intersect with existing where clause
+      where.id = {
+        [Op.and]: [
+          where.id,
+          { [Op.in]: filteredUserIds }
+        ]
+      };
     }
 
     // Fetch users

@@ -15,6 +15,84 @@ router.use(authMiddleware);
 
 /**
  * @swagger
+ * /api/discovery/filters:
+ *   get:
+ *     summary: Get all discovery filter options
+ *     description: Returns all available filter option values (relationship goals, zodiac signs, education levels, etc.) for building the filter UI.
+ *     tags: [Discovery]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Filter options retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     relationship_goals:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             example: "Long-term partner"
+ *                           icon:
+ *                             type: string
+ *                             example: "💕"
+ *                     zodiac_signs:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         example: "Aries"
+ *                     education_levels:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     family_plan_options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     communication_styles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     love_styles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     pet_options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     drinking_options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     smoking_options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     workout:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     social_media_options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ */
+router.get('/filters', discoveryController.getFilters);
+
+/**
+ * @swagger
  * /api/discovery/users:
  *   get:
  *     summary: Get users for swipe screen
@@ -36,6 +114,72 @@ router.use(authMiddleware);
  *           type: integer
  *           default: 20
  *         description: Number of profiles per page
+ *       - in: query
+ *         name: relationshipGoal
+ *         schema:
+ *           type: string
+ *           example: "Long-term partner"
+ *         description: Filter by relationship goal (from /filters)
+ *       - in: query
+ *         name: zodiacSign
+ *         schema:
+ *           type: string
+ *           example: "Aries"
+ *         description: Filter by zodiac sign
+ *       - in: query
+ *         name: educationLevel
+ *         schema:
+ *           type: string
+ *           example: "Bachelors"
+ *         description: Filter by education level
+ *       - in: query
+ *         name: familyPlan
+ *         schema:
+ *           type: string
+ *           example: "I want children"
+ *         description: Filter by family plan
+ *       - in: query
+ *         name: communicationStyle
+ *         schema:
+ *           type: string
+ *           example: "Phone caller"
+ *         description: Filter by communication style
+ *       - in: query
+ *         name: loveStyle
+ *         schema:
+ *           type: string
+ *           example: "Touch"
+ *         description: Filter by love style
+ *       - in: query
+ *         name: petPreference
+ *         schema:
+ *           type: string
+ *           example: "Dog"
+ *         description: Filter by pet preference
+ *       - in: query
+ *         name: drinking
+ *         schema:
+ *           type: string
+ *           example: "Socially on weekends"
+ *         description: Filter by drinking preference
+ *       - in: query
+ *         name: smoking
+ *         schema:
+ *           type: string
+ *           example: "Non-smoker"
+ *         description: Filter by smoking preference
+ *       - in: query
+ *         name: workout
+ *         schema:
+ *           type: string
+ *           example: "Often"
+ *         description: Filter by workout frequency
+ *       - in: query
+ *         name: socialMedia
+ *         schema:
+ *           type: string
+ *           example: "Socially active"
+ *         description: Filter by social media usage
  *     responses:
  *       200:
  *         description: Discovery profiles retrieved successfully
