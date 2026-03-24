@@ -11,40 +11,11 @@ class OnlineUsersService {
     const { page = 1, limit = 20, gender, minAge, maxAge } = options;
 
     // Get socket-connected user IDs (truly online right now)
-    const onlineUserIds = Array.from(connectedUsers.keys()).filter(id => id !== currentUserId);
+    const onlineSocketIds = new Set(connectedUsers.keys());
 
-    if (onlineUserIds.length === 0) {
-      // Fallback: also check DB isOnline flag
-      const where = {
-        id: { [Op.ne]: currentUserId },
-        isOnline: true,
-        accountStatus: 'active'
-      };
-      if (gender) where.gender = gender;
-      if (minAge) where.age = { ...where.age, [Op.gte]: parseInt(minAge) };
-      if (maxAge) where.age = { ...where.age, [Op.lte]: parseInt(maxAge) };
-
-      const offset = (page - 1) * limit;
-      const { rows, count } = await User.findAndCountAll({
-        where,
-        attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'gender', 'location', 'bio', 'interests', 'isOnline', 'occupation'],
-        include: [{ model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'sortOrder'], limit: 3 }],
-        order: [['updatedAt', 'DESC']],
-        limit: parseInt(limit),
-        offset
-      });
-
-      return {
-        users: rows.map(u => this._formatUser(u, true)),
-        total: count,
-        page: parseInt(page),
-        totalPages: Math.ceil(count / limit)
-      };
-    }
-
-    // Build filter for socket-connected users
+    // Build where clause - show all active users (with online status)
     const where = {
-      id: { [Op.in]: onlineUserIds },
+      id: { [Op.ne]: currentUserId },
       accountStatus: 'active'
     };
     if (gender) where.gender = gender;
@@ -56,13 +27,16 @@ class OnlineUsersService {
       where,
       attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'gender', 'location', 'bio', 'interests', 'isOnline', 'occupation'],
       include: [{ model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'sortOrder'], limit: 3 }],
-      order: [['updatedAt', 'DESC']],
+      order: [
+        ['isOnline', 'DESC'],    // Online users first
+        ['updatedAt', 'DESC']
+      ],
       limit: parseInt(limit),
       offset
     });
 
     return {
-      users: rows.map(u => this._formatUser(u, true)),
+      users: rows.map(u => this._formatUser(u, onlineSocketIds.has(u.id) || u.isOnline)),
       total: count,
       page: parseInt(page),
       totalPages: Math.ceil(count / limit)
