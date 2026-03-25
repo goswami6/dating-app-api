@@ -34,6 +34,9 @@ function setupSocketHandlers(io) {
     socket.on('call:initiate', async (data, ack) => {
       try {
         const { receiverId, callType, matchId } = data || {};
+        console.log(`[call:initiate] caller=${userId}, data=`, JSON.stringify(data));
+        console.log(`[call:initiate] connectedUsers=`, [...connectedUsers.keys()]);
+
         if (!receiverId || !callType) {
           const err = { success: false, message: 'receiverId and callType are required' };
           socket.emit('call:error', err);
@@ -51,14 +54,18 @@ function setupSocketHandlers(io) {
         const canCall = await walletService.canCall(userId, callType);
         if (!canCall) {
           const err = { success: false, message: 'Insufficient wallet balance for call' };
+          console.log(`[call:initiate] wallet check failed for user ${userId}`);
           socket.emit('call:error', err);
           if (typeof ack === 'function') ack(err);
           return;
         }
 
-        // Check receiver is connected
-        if (!connectedUsers.has(receiverId)) {
-          const err = { success: false, message: 'User is offline' };
+        // Check receiver is connected (compare as numbers for type safety)
+        const receiverIdNum = parseInt(receiverId);
+        const isReceiverOnline = [...connectedUsers.keys()].some(k => parseInt(k) === receiverIdNum);
+        if (!isReceiverOnline) {
+          const err = { success: false, message: `User ${receiverId} is offline. Connected users: [${[...connectedUsers.keys()].join(', ')}]` };
+          console.log(`[call:initiate] receiver ${receiverId} offline`);
           socket.emit('call:error', err);
           if (typeof ack === 'function') ack(err);
           return;
