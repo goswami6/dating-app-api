@@ -4,18 +4,20 @@ const { Op } = require('sequelize');
 
 class CallService {
   async initiateCall(callerId, receiverId, matchId, callType) {
-    // Verify match exists and is mutual
-    const match = await Match.findOne({
-      where: {
-        id: matchId,
-        status: 'mutual_match',
-        [Op.or]: [
-          { userId: callerId, matchedUserId: receiverId },
-          { userId: receiverId, matchedUserId: callerId },
-        ],
-      },
-    });
-    if (!match) throw new Error('Cannot call — no mutual match with this user');
+    // If matchId provided, verify match exists and is mutual
+    if (matchId) {
+      const match = await Match.findOne({
+        where: {
+          id: matchId,
+          status: 'mutual_match',
+          [Op.or]: [
+            { userId: callerId, matchedUserId: receiverId },
+            { userId: receiverId, matchedUserId: callerId },
+          ],
+        },
+      });
+      if (!match) throw new Error('Cannot call — no mutual match with this user');
+    }
 
     // Check if either user is already in a call
     const activeCallCaller = await callRepository.findActiveCall(callerId);
@@ -25,7 +27,7 @@ class CallService {
     if (activeCallReceiver) {
       // Create a busy call record
       const busyCall = await callRepository.create({
-        matchId,
+        matchId: matchId || null,
         callerId,
         receiverId,
         callType,
@@ -36,7 +38,7 @@ class CallService {
     }
 
     const call = await callRepository.create({
-      matchId,
+      matchId: matchId || null,
       callerId,
       receiverId,
       callType,

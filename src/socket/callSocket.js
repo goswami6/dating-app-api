@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const callService = require('../services/callService');
+const walletService = require('../services/walletService');
 
 // Track connected users: userId -> socketId
 const connectedUsers = new Map();
@@ -26,6 +27,89 @@ function setupSocketHandlers(io) {
     // Join user's personal room for targeted events
     socket.join(`user_${userId}`);
     console.log(`User ${userId} connected (socket: ${socket.id})`);
+
+    // ─── Call Initiation via Socket ───
+
+    // Caller initiates a call (creates DB record + notifies receiver)
+    socket.on('call:initiate', async ({ receiverId, callType, matchId }) => {
+      try {
+        if (!receiverId || !callType) {
+          return socket.emit('call:error', { message: 'receiverId and callType are required' });
+        }
+        if (!['voice', 'video'].includes(callType)) {
+          return socket.emit('call:error', { message: 'callType must be voice or video' });
+        }
+
+        // Check wallet balance
+        const canCall = await walletService.canCall(userId, callType);
+        if (!canCall) {
+          return socket.emit('call:error', { message: 'Insufficient wallet balance for call' });
+        }
+
+        // Check receiver is connected
+        if (!connectedUsers.has(receiverId)) {
+          return socket.emit('call:error', { message: 'User is offline' });
+        }
+
+        const result = await callService.initiateCall(userId, receiverId, matchId || null, callType);
+
+        if (result.busy) {
+          return socket.emit('call:busy', {
+            callId: result.call.id,
+            receiverId,
+            message: 'User is busy on another call'
+          });
+        }
+
+        // Notify caller of success
+        socket.emit('call:initiated', {
+          callId: result.call.id,
+          receiverId,
+          callType,
+        });
+
+        // Notify receiver of incoming call
+        io.to(`user_${receiverId}`).emit('call:incoming', {
+          callId: result.call.id,
+          callerId: userId,
+          callType,
+        });
+      } catch (err) {
+        socket.emit('call:error', { message: err.message });
+      }
+    });
+
+    // Receiver accepts the call
+    socket.on('call:accept', async ({ callId }) => {
+      try {
+        const call = await callService.answerCall(callId, userId);
+        // Notify caller that call is accepted
+        io.to(`user_${call.callerId}`).emit('call:accepted', {
+          callId: call.id,
+          receiverId: userId,
+        });
+        // Notify receiver too
+        socket.emit('call:accepted', {
+          callId: call.id,
+          callerId: call.callerId,
+        });
+      } catch (err) {
+        socket.emit('call:error', { callId, message: err.message });
+      }
+    });
+
+    // Receiver rejects the call
+    socket.on('call:reject', async ({ callId }) => {
+      try {
+        const call = await callService.rejectCall(callId, userId);
+        io.to(`user_${call.callerId}`).emit('call:rejected', {
+          callId: call.id,
+          receiverId: userId,
+        });
+      } catch (err) {
+        socket.emit('call:error', { callId, message: err.message });
+      }
+    });
 
     // ─── WebRTC Signaling ───
 
@@ -71,7 +155,28 @@ function setupSocketHandlers(io) {
       try {
         const call = await callService.endCall(callId, userId);
         const otherUserId = call.callerId === userId ? call.receiverId : call.callerId;
+
+        // Deduct wallet for call duration (caller pays)
+        if (call.duration > 0) {
+          const durationMinutes = call.duration / 60;
+          try {
+            if (call.callType === 'video') {
+              await walletService.deductForVideoCall(call.callerId, call.receiverId, durationMinutes);
+            } else {
+              await walletService.deductForVoiceCall(call.callerId, call.receiverId, durationMinutes);
+            }
+          } catch (walletErr) {
+            // Log but don't fail the call end
+            console.error('Wallet deduction failed:', walletErr.message);
+          }
+        }
+
         io.to(`user_${otherUserId}`).emit('call_ended', {
+          callId: call.id,
+          duration: call.duration,
+          endReason: call.endReason,
+        });
+        socket.emit('call_ended', {
           callId: call.id,
           duration: call.duration,
           endReason: call.endReason,
@@ -133,6 +238,21 @@ function setupSocketHandlers(io) {
         if (activeCall) {
           const call = await callService.endCall(activeCall.id, userId);
           const otherUserId = call.callerId === userId ? call.receiverId : call.callerId;
+
+          // Deduct wallet for call duration (caller pays)
+          if (call.duration > 0) {
+            const durationMinutes = call.duration / 60;
+            try {
+              if (call.callType === 'video') {
+                await walletService.deductForVideoCall(call.callerId, call.receiverId, durationMinutes);
+              } else {
+                await walletService.deductForVoiceCall(call.callerId, call.receiverId, durationMinutes);
+              }
+            } catch (walletErr) {
+              console.error('Wallet deduction on disconnect failed:', walletErr.message);
+            }
+          }
+
           io.to(`user_${otherUserId}`).emit('call_ended', {
             callId: call.id,
             duration: call.duration,

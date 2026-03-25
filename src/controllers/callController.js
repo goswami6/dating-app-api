@@ -8,8 +8,8 @@ class CallController {
       const callerId = req.user.id;
       const { receiverId, matchId, callType } = req.body;
 
-      if (!receiverId || !matchId || !callType) {
-        return apiResponse.error(res, 'receiverId, matchId, and callType are required', 400);
+      if (!receiverId || !callType) {
+        return apiResponse.error(res, 'receiverId and callType are required', 400);
       }
       if (!['voice', 'video'].includes(callType)) {
         return apiResponse.error(res, 'callType must be voice or video', 400);
