@@ -114,7 +114,9 @@ function setupSocketHandlers(io) {
     socket.on('call:accept', async (data, ack) => {
       try {
         const { callId } = data || {};
+        console.log(`[call:accept] user=${userId}, callId=${callId}`);
         const call = await callService.answerCall(callId, userId);
+        console.log(`[call:accept] call answered, callerId=${call.callerId}, receiverId=${call.receiverId}`);
         const acceptedData = {
           success: true,
           callId: call.id,
@@ -126,11 +128,12 @@ function setupSocketHandlers(io) {
 
         // Notify caller that call is accepted
         io.to(`user_${call.callerId}`).emit('call:accepted', acceptedData);
-        // Notify receiver too
+        // Notify receiver too (current socket)
         socket.emit('call:accepted', acceptedData);
-
+        // Always send ack so Postman shows the response
         if (typeof ack === 'function') ack(acceptedData);
       } catch (err) {
+        console.error(`[call:accept] error:`, err.message);
         const errData = { success: false, message: err.message };
         socket.emit('call:error', errData);
         if (typeof ack === 'function') ack(errData);
