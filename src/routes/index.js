@@ -24,6 +24,7 @@ const shopOrderRoutes = require('./shopOrderRoutes');
 const walletRoutes = require('./walletRoutes');
 const onlineUsersRoutes = require('./onlineUsersRoutes');
 const bookingRoutes = require('./bookingRoutes');
+const adminRoutes = require('./adminRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -48,5 +49,6 @@ router.use('/shop/orders', shopOrderRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/online-users', onlineUsersRoutes);
 router.use('/bookings', bookingRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;
