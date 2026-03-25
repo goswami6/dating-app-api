@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const callService = require('../services/callService');
 const walletService = require('../services/walletService');
+const bookingService = require('../services/bookingService');
 
 // Track connected users: userId -> socketId
 const connectedUsers = new Map();
@@ -239,6 +240,123 @@ function setupSocketHandlers(io) {
       } catch (err) {
         const errData = { success: false, message: err.message };
         socket.emit('call:error', errData);
+        if (typeof ack === 'function') ack(errData);
+      }
+    });
+
+    // ─── Booking System (Online Users) ───
+
+    // User sends a booking request
+    socket.on('booking:request', async (data, ack) => {
+      try {
+        const { receiverId, bookingDate, bookingTime, purpose, note } = data || {};
+        console.log(`[booking:request] requester=${userId}, data=`, JSON.stringify(data));
+
+        if (!receiverId || !bookingDate || !bookingTime || !purpose) {
+          const err = { success: false, message: 'receiverId, bookingDate, bookingTime, and purpose are required' };
+          socket.emit('booking:error', err);
+          if (typeof ack === 'function') ack(err);
+          return;
+        }
+
+        const booking = await bookingService.createBooking(userId, receiverId, {
+          bookingDate,
+          bookingTime,
+          purpose,
+          note,
+        });
+
+        const requestData = {
+          success: true,
+          bookingId: booking.id,
+          receiverId: booking.receiverId,
+          bookingDate: booking.bookingDate,
+          bookingTime: booking.bookingTime,
+          purpose: booking.purpose,
+          status: booking.status,
+        };
+
+        // Notify requester
+        socket.emit('booking:requested', requestData);
+
+        // Notify receiver about new booking request
+        io.to(`user_${receiverId}`).emit('booking:new_request', {
+          bookingId: booking.id,
+          requester: booking.Requester,
+          bookingDate: booking.bookingDate,
+          bookingTime: booking.bookingTime,
+          purpose: booking.purpose,
+          note: booking.note,
+        });
+
+        if (typeof ack === 'function') ack(requestData);
+      } catch (err) {
+        const errData = { success: false, message: err.message };
+        socket.emit('booking:error', errData);
+        if (typeof ack === 'function') ack(errData);
+      }
+    });
+
+    // Receiver accepts a booking
+    socket.on('booking:accept', async (data, ack) => {
+      try {
+        const { bookingId } = data || {};
+        console.log(`[booking:accept] user=${userId}, bookingId=${bookingId}`);
+
+        const booking = await bookingService.acceptBooking(bookingId, userId);
+
+        const acceptedData = {
+          success: true,
+          bookingId: booking.id,
+          status: 'accepted',
+          bookingDate: booking.bookingDate,
+          bookingTime: booking.bookingTime,
+          purpose: booking.purpose,
+        };
+
+        // Notify requester that booking is accepted
+        io.to(`user_${booking.requesterId}`).emit('booking:accepted', {
+          bookingId: booking.id,
+          receiver: booking.Receiver,
+          bookingDate: booking.bookingDate,
+          bookingTime: booking.bookingTime,
+          purpose: booking.purpose,
+        });
+
+        socket.emit('booking:accepted', acceptedData);
+        if (typeof ack === 'function') ack(acceptedData);
+      } catch (err) {
+        const errData = { success: false, message: err.message };
+        socket.emit('booking:error', errData);
+        if (typeof ack === 'function') ack(errData);
+      }
+    });
+
+    // Receiver rejects a booking
+    socket.on('booking:reject', async (data, ack) => {
+      try {
+        const { bookingId, rejectionReason } = data || {};
+        console.log(`[booking:reject] user=${userId}, bookingId=${bookingId}`);
+
+        const booking = await bookingService.rejectBooking(bookingId, userId, rejectionReason);
+
+        const rejectedData = {
+          success: true,
+          bookingId: booking.id,
+          status: 'rejected',
+        };
+
+        // Notify requester that booking is rejected
+        io.to(`user_${booking.requesterId}`).emit('booking:rejected', {
+          bookingId: booking.id,
+          receiver: booking.Receiver,
+          rejectionReason: booking.rejectionReason,
+        });
+
+        if (typeof ack === 'function') ack(rejectedData);
+      } catch (err) {
+        const errData = { success: false, message: err.message };
+        socket.emit('booking:error', errData);
         if (typeof ack === 'function') ack(errData);
       }
     });

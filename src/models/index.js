@@ -24,6 +24,7 @@ const Wallet = require('./walletModel');
 const WalletTransaction = require('./walletTransactionModel');
 const RandomChat = require('./randomChatModel');
 const RandomChatMessage = require('./randomChatMessageModel');
+const Booking = require('./bookingModel');
 
 // Register all models
 const models = {
@@ -50,6 +51,7 @@ const models = {
     WalletTransaction,
     RandomChat,
     RandomChatMessage,
+    Booking,
 };
 
 // Define associations
@@ -179,6 +181,12 @@ function setupAssociations() {
     // User ↔ RandomChatMessage (sender)
     User.hasMany(RandomChatMessage, { foreignKey: 'senderId', as: 'RandomMessages' });
     RandomChatMessage.belongsTo(User, { foreignKey: 'senderId', as: 'Sender' });
+
+    // User ↔ Booking
+    User.hasMany(Booking, { foreignKey: 'requesterId', as: 'SentBookings' });
+    User.hasMany(Booking, { foreignKey: 'receiverId', as: 'ReceivedBookings' });
+    Booking.belongsTo(User, { foreignKey: 'requesterId', as: 'Requester' });
+    Booking.belongsTo(User, { foreignKey: 'receiverId', as: 'Receiver' });
 }
 
 setupAssociations();
