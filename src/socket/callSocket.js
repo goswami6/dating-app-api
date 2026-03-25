@@ -31,42 +31,62 @@ function setupSocketHandlers(io) {
     // ─── Call Initiation via Socket ───
 
     // Caller initiates a call (creates DB record + notifies receiver)
-    socket.on('call:initiate', async ({ receiverId, callType, matchId }) => {
+    socket.on('call:initiate', async (data, ack) => {
       try {
+        const { receiverId, callType, matchId } = data || {};
         if (!receiverId || !callType) {
-          return socket.emit('call:error', { message: 'receiverId and callType are required' });
+          const err = { success: false, message: 'receiverId and callType are required' };
+          socket.emit('call:error', err);
+          if (typeof ack === 'function') ack(err);
+          return;
         }
         if (!['voice', 'video'].includes(callType)) {
-          return socket.emit('call:error', { message: 'callType must be voice or video' });
+          const err = { success: false, message: 'callType must be voice or video' };
+          socket.emit('call:error', err);
+          if (typeof ack === 'function') ack(err);
+          return;
         }
 
         // Check wallet balance
         const canCall = await walletService.canCall(userId, callType);
         if (!canCall) {
-          return socket.emit('call:error', { message: 'Insufficient wallet balance for call' });
+          const err = { success: false, message: 'Insufficient wallet balance for call' };
+          socket.emit('call:error', err);
+          if (typeof ack === 'function') ack(err);
+          return;
         }
 
         // Check receiver is connected
         if (!connectedUsers.has(receiverId)) {
-          return socket.emit('call:error', { message: 'User is offline' });
+          const err = { success: false, message: 'User is offline' };
+          socket.emit('call:error', err);
+          if (typeof ack === 'function') ack(err);
+          return;
         }
 
         const result = await callService.initiateCall(userId, receiverId, matchId || null, callType);
 
         if (result.busy) {
-          return socket.emit('call:busy', {
+          const busyData = {
+            success: false,
             callId: result.call.id,
             receiverId,
             message: 'User is busy on another call'
-          });
+          };
+          socket.emit('call:busy', busyData);
+          if (typeof ack === 'function') ack(busyData);
+          return;
         }
 
-        // Notify caller of success
-        socket.emit('call:initiated', {
+        const initiatedData = {
+          success: true,
           callId: result.call.id,
           receiverId,
           callType,
-        });
+        };
+
+        // Notify caller of success
+        socket.emit('call:initiated', initiatedData);
 
         // Notify receiver of incoming call
         io.to(`user_${receiverId}`).emit('call:incoming', {
@@ -74,40 +94,63 @@ function setupSocketHandlers(io) {
           callerId: userId,
           callType,
         });
+
+        if (typeof ack === 'function') ack(initiatedData);
       } catch (err) {
-        socket.emit('call:error', { message: err.message });
+        const errData = { success: false, message: err.message };
+        socket.emit('call:error', errData);
+        if (typeof ack === 'function') ack(errData);
       }
     });
 
     // Receiver accepts the call
-    socket.on('call:accept', async ({ callId }) => {
+    socket.on('call:accept', async (data, ack) => {
       try {
+        const { callId } = data || {};
         const call = await callService.answerCall(callId, userId);
-        // Notify caller that call is accepted
-        io.to(`user_${call.callerId}`).emit('call:accepted', {
+        const acceptedData = {
+          success: true,
           callId: call.id,
-          receiverId: userId,
-        });
-        // Notify receiver too
-        socket.emit('call:accepted', {
-          callId: call.id,
+          callType: call.callType,
           callerId: call.callerId,
-        });
+          receiverId: call.receiverId,
+          status: 'ongoing',
+        };
+
+        // Notify caller that call is accepted
+        io.to(`user_${call.callerId}`).emit('call:accepted', acceptedData);
+        // Notify receiver too
+        socket.emit('call:accepted', acceptedData);
+
+        if (typeof ack === 'function') ack(acceptedData);
       } catch (err) {
-        socket.emit('call:error', { callId, message: err.message });
+        const errData = { success: false, message: err.message };
+        socket.emit('call:error', errData);
+        if (typeof ack === 'function') ack(errData);
       }
     });
 
     // Receiver rejects the call
-    socket.on('call:reject', async ({ callId }) => {
+    socket.on('call:reject', async (data, ack) => {
       try {
+        const { callId } = data || {};
         const call = await callService.rejectCall(callId, userId);
+        const rejectedData = {
+          success: true,
+          callId: call.id,
+          status: 'rejected',
+        };
+
         io.to(`user_${call.callerId}`).emit('call:rejected', {
           callId: call.id,
           receiverId: userId,
         });
+
+        if (typeof ack === 'function') ack(rejectedData);
       } catch (err) {
-        socket.emit('call:error', { callId, message: err.message });
+        const errData = { success: false, message: err.message };
+        socket.emit('call:error', errData);
+        if (typeof ack === 'function') ack(errData);
       }
     });
 
@@ -151,8 +194,9 @@ function setupSocketHandlers(io) {
     });
 
     // Call ended via socket (backup for REST endpoint)
-    socket.on('call:end', async ({ callId }) => {
+    socket.on('call:end', async (data, ack) => {
       try {
+        const { callId } = data || {};
         const call = await callService.endCall(callId, userId);
         const otherUserId = call.callerId === userId ? call.receiverId : call.callerId;
 
@@ -171,18 +215,21 @@ function setupSocketHandlers(io) {
           }
         }
 
-        io.to(`user_${otherUserId}`).emit('call_ended', {
+        const endedData = {
+          success: true,
           callId: call.id,
           duration: call.duration,
           endReason: call.endReason,
-        });
-        socket.emit('call_ended', {
-          callId: call.id,
-          duration: call.duration,
-          endReason: call.endReason,
-        });
+        };
+
+        io.to(`user_${otherUserId}`).emit('call_ended', endedData);
+        socket.emit('call_ended', endedData);
+
+        if (typeof ack === 'function') ack(endedData);
       } catch (err) {
-        socket.emit('call:error', { callId, message: err.message });
+        const errData = { success: false, message: err.message };
+        socket.emit('call:error', errData);
+        if (typeof ack === 'function') ack(errData);
       }
     });
 
