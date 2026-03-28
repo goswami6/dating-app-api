@@ -2,9 +2,19 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const authMiddleware = require('../middleware/authMiddleware');
+const apiResponse = require('../utils/apiResponse');
 
-// All admin routes require authentication
+// Admin-only middleware
+const adminMiddleware = (req, res, next) => {
+    if (!req.user || !req.user.isAdmin) {
+        return apiResponse.error(res, 'Access denied. Admin only.', 403);
+    }
+    next();
+};
+
+// All admin routes require authentication + admin check
 router.use(authMiddleware);
+router.use(adminMiddleware);
 
 /**
  * @swagger

@@ -151,6 +151,7 @@ class AuthService {
             id: user.id,
             email: user.email,
             accountStatus: user.accountStatus,
+            isAdmin: user.isAdmin || false,
         };
 
         return jwt.sign(payload, process.env.JWT_SECRET, {

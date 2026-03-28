@@ -124,6 +124,11 @@ const User = sequelize.define('User', {
   otpVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  isAdmin: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether the user is an admin'
   }
 }, {
   tableName: 'users',

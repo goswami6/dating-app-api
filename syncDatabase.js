@@ -1,8 +1,59 @@
 const mysql = require('mysql2/promise');
 const { DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const { sequelize, MatchCriteria, Message, Subscription, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, RandomChat, RandomChatMessage, Booking } = require('./src/models');
+const { sequelize, User, MatchCriteria, Message, Subscription, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, RandomChat, RandomChatMessage, Booking } = require('./src/models');
+
+async function ensureUserAdminColumn() {
+    const queryInterface = sequelize.getQueryInterface();
+    try {
+        const tableDefinition = await queryInterface.describeTable('users');
+        if (!tableDefinition.isAdmin) {
+            await queryInterface.addColumn('users', 'isAdmin', {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+                comment: 'Whether the user is an admin',
+            });
+            console.log('Added isAdmin column to users table');
+        }
+    } catch (err) {
+        console.log('ensureUserAdminColumn skipped:', err.message);
+    }
+}
+
+async function seedAdminUser() {
+    try {
+        const adminEmail = 'admin@datingapp.com';
+        const existing = await User.findOne({ where: { email: adminEmail } });
+        if (existing) {
+            if (!existing.isAdmin) {
+                await existing.update({ isAdmin: true });
+                console.log('Existing admin user updated with isAdmin=true');
+            }
+            console.log('Admin user already exists, skipping seed...');
+            return;
+        }
+
+        const passwordHash = await bcrypt.hash('Admin@123', 10);
+        await User.create({
+            email: adminEmail,
+            passwordHash,
+            firstName: 'Admin',
+            lastName: 'User',
+            gender: 'male',
+            age: 30,
+            location: 'India',
+            bio: 'Dating App Admin',
+            accountStatus: 'active',
+            isVerified: true,
+            isAdmin: true,
+        });
+        console.log('Default admin user created: admin@datingapp.com / Admin@123');
+    } catch (err) {
+        console.error('Error seeding admin user:', err.message);
+    }
+}
 
 async function ensureMatchCriteriaColumns() {
     const queryInterface = sequelize.getQueryInterface();
@@ -176,6 +227,7 @@ async function ensureMatchCriteriaColumns() {
 async function syncDatabaseSchema() {
     await MatchCriteria.sync();
     await ensureMatchCriteriaColumns();
+    await ensureUserAdminColumn();
     await Message.sync();
     await Subscription.sync();
     await Call.sync();
@@ -308,6 +360,7 @@ async function initializeDatabase() {
 
         await syncDatabaseSchema();
         await seedCategoriesAndProducts();
+        await seedAdminUser();
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
