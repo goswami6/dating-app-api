@@ -41,14 +41,98 @@ class RandomChatRepository {
         [Op.or]: [{ user1Id: userId }, { user2Id: userId }]
       },
       include: [
-        { model: User, as: 'User1', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'age', 'location'] },
-        { model: User, as: 'User2', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'age', 'location'] }
+        { model: User, as: 'User1', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location'] },
+        { model: User, as: 'User2', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location'] }
       ],
       order: [['updatedAt', 'DESC']],
       limit: parseInt(limit),
       offset
     });
     return { chats: rows, total: count, page: parseInt(page), totalPages: Math.ceil(count / limit) };
+  }
+
+  // Full chat history (active + ended) with last message & unread count
+  async getChatHistory(userId, page = 1, limit = 20, status = null) {
+    const offset = (page - 1) * limit;
+    const where = {
+      [Op.or]: [{ user1Id: userId }, { user2Id: userId }]
+    };
+    if (status) where.status = status;
+
+    const { rows, count } = await RandomChat.findAndCountAll({
+      where,
+      include: [
+        { model: User, as: 'User1', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location'] },
+        { model: User, as: 'User2', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location'] }
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: parseInt(limit),
+      offset
+    });
+
+    // Enrich each chat with last message and unread count
+    const chats = [];
+    for (const chat of rows) {
+      const otherUser = chat.user1Id === userId ? chat.User2 : chat.User1;
+
+      const lastMessage = await RandomChatMessage.findOne({
+        where: { chatId: chat.id },
+        order: [['sentAt', 'DESC']],
+        attributes: ['id', 'text', 'messageType', 'senderId', 'sentAt', 'isRead']
+      });
+
+      const unreadCount = await RandomChatMessage.count({
+        where: { chatId: chat.id, senderId: { [Op.ne]: userId }, isRead: false }
+      });
+
+      chats.push({
+        chatId: chat.id,
+        status: chat.status,
+        otherUser: otherUser ? {
+          id: otherUser.id,
+          firstName: otherUser.firstName,
+          lastName: otherUser.lastName,
+          profilePicture: otherUser.profilePicture,
+          isOnline: otherUser.isOnline,
+          lastSeen: otherUser.lastSeen,
+          age: otherUser.age,
+          location: otherUser.location
+        } : null,
+        lastMessage: lastMessage ? {
+          id: lastMessage.id,
+          text: lastMessage.text,
+          messageType: lastMessage.messageType,
+          senderId: lastMessage.senderId,
+          sentAt: lastMessage.sentAt,
+          isRead: lastMessage.isRead
+        } : null,
+        unreadCount,
+        totalMessages: chat.totalMessages,
+        totalSpent: chat.totalSpent,
+        startedAt: chat.startedAt,
+        endedAt: chat.endedAt
+      });
+    }
+
+    return { chats, total: count, page: parseInt(page), totalPages: Math.ceil(count / limit) };
+  }
+
+  // Delete chat (soft — removes for the user, actually deletes messages)
+  async deleteChat(chatId) {
+    await RandomChatMessage.destroy({ where: { chatId } });
+    await RandomChat.destroy({ where: { id: chatId } });
+    return true;
+  }
+
+  // Get chat detail with full stats
+  async getChatDetail(chatId) {
+    const chat = await RandomChat.findByPk(chatId, {
+      include: [
+        { model: User, as: 'User1', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location', 'bio', 'occupation'] },
+        { model: User, as: 'User2', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen', 'age', 'location', 'bio', 'occupation'] }
+      ]
+    });
+    return chat;
   }
 
   async endChat(chatId) {

@@ -312,6 +312,237 @@ router.get('/shop/categories', adminController.getShopCategories);
  */
 router.get('/shop/orders', adminController.getShopOrders);
 
+// ─── Product CRUD ─────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/shop/products:
+ *   post:
+ *     summary: Create a new product
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [categoryId, name, price]
+ *             properties:
+ *               categoryId: { type: integer }
+ *               name: { type: string }
+ *               description: { type: string }
+ *               shortDescription: { type: string }
+ *               price: { type: number }
+ *               compareAtPrice: { type: number }
+ *               currency: { type: string, default: INR }
+ *               images: { type: array, items: { type: string } }
+ *               thumbnail: { type: string }
+ *               sku: { type: string }
+ *               stock: { type: integer }
+ *               isActive: { type: boolean }
+ *               isFeatured: { type: boolean }
+ *               tags: { type: array, items: { type: string } }
+ *               attributes: { type: object }
+ *               icon: { type: string }
+ *     responses:
+ *       201:
+ *         description: Product created
+ */
+router.post('/shop/products', adminController.createProduct);
+
+/**
+ * @swagger
+ * /api/admin/shop/products/{id}:
+ *   put:
+ *     summary: Update a product
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               categoryId: { type: integer }
+ *               name: { type: string }
+ *               description: { type: string }
+ *               shortDescription: { type: string }
+ *               price: { type: number }
+ *               compareAtPrice: { type: number }
+ *               images: { type: array, items: { type: string } }
+ *               thumbnail: { type: string }
+ *               sku: { type: string }
+ *               stock: { type: integer }
+ *               isActive: { type: boolean }
+ *               isFeatured: { type: boolean }
+ *               tags: { type: array, items: { type: string } }
+ *               attributes: { type: object }
+ *               icon: { type: string }
+ *     responses:
+ *       200:
+ *         description: Product updated
+ */
+router.put('/shop/products/:id', adminController.updateProduct);
+
+/**
+ * @swagger
+ * /api/admin/shop/products/{id}:
+ *   delete:
+ *     summary: Delete a product
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Product deleted
+ */
+router.delete('/shop/products/:id', adminController.deleteProduct);
+
+// ─── Category CRUD ────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/shop/categories:
+ *   post:
+ *     summary: Create a new category
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               description: { type: string }
+ *               image: { type: string }
+ *               parentId: { type: integer }
+ *               sortOrder: { type: integer }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       201:
+ *         description: Category created
+ */
+router.post('/shop/categories', adminController.createCategory);
+
+/**
+ * @swagger
+ * /api/admin/shop/categories/{id}:
+ *   put:
+ *     summary: Update a category
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               description: { type: string }
+ *               image: { type: string }
+ *               parentId: { type: integer }
+ *               sortOrder: { type: integer }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Category updated
+ */
+router.put('/shop/categories/:id', adminController.updateCategory);
+
+/**
+ * @swagger
+ * /api/admin/shop/categories/{id}:
+ *   delete:
+ *     summary: Delete a category (fails if products exist in it)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Category deleted
+ */
+router.delete('/shop/categories/:id', adminController.deleteCategory);
+
+// ─── Order Management ─────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/shop/orders/{id}:
+ *   get:
+ *     summary: Get order detail with items, address and user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Order detail
+ */
+router.get('/shop/orders/:id', adminController.getOrderDetail);
+
+/**
+ * @swagger
+ * /api/admin/shop/orders/{id}/status:
+ *   put:
+ *     summary: Update order status / payment status
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status: { type: string, enum: [pending, confirmed, processing, shipped, delivered, cancelled, returned, refunded] }
+ *               paymentStatus: { type: string, enum: [pending, paid, failed, refunded] }
+ *               cancelReason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Order updated
+ */
+router.put('/shop/orders/:id/status', adminController.updateOrderStatus);
+
 /**
  * @swagger
  * /api/admin/wallet/transactions:
@@ -514,5 +745,222 @@ router.delete('/subscriptions/plans/:id', adminController.deleteSubscriptionPlan
  *         description: Paginated user subscriptions list
  */
 router.get('/subscriptions', adminController.getSubscriptions);
+
+// ─── Badge Management ─────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/stats/badges:
+ *   get:
+ *     summary: Get badge statistics
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Badge stats (totalBadges, totalAwarded, premiumBadges)
+ */
+router.get('/stats/badges', adminController.statsBadges);
+
+/**
+ * @swagger
+ * /api/admin/badges:
+ *   get:
+ *     summary: Get all badges (paginated)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Paginated badges list
+ */
+router.get('/badges', adminController.getBadges);
+
+/**
+ * @swagger
+ * /api/admin/badges:
+ *   post:
+ *     summary: Create a new badge
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, icon]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               icon:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               requiredMonth:
+ *                 type: integer
+ *               color:
+ *                 type: string
+ *               isPremium:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: Badge created
+ */
+router.post('/badges', adminController.createBadge);
+
+/**
+ * @swagger
+ * /api/admin/badges/{id}:
+ *   put:
+ *     summary: Update a badge
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               icon:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               requiredMonth:
+ *                 type: integer
+ *               color:
+ *                 type: string
+ *               isPremium:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Badge updated
+ */
+router.put('/badges/:id', adminController.updateBadge);
+
+/**
+ * @swagger
+ * /api/admin/badges/{id}:
+ *   delete:
+ *     summary: Delete a badge
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Badge deleted
+ */
+router.delete('/badges/:id', adminController.deleteBadge);
+
+/**
+ * @swagger
+ * /api/admin/badges/users:
+ *   get:
+ *     summary: Get user-badge assignments (award history)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: badgeId
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User badges list
+ */
+router.get('/badges/users', adminController.getUserBadges);
+
+/**
+ * @swagger
+ * /api/admin/badges/award:
+ *   post:
+ *     summary: Award a badge to a user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, badgeId]
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *               badgeId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Badge awarded
+ */
+router.post('/badges/award', adminController.awardBadge);
+
+/**
+ * @swagger
+ * /api/admin/badges/revoke/{userId}/{badgeId}:
+ *   delete:
+ *     summary: Revoke a badge from a user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: badgeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Badge revoked
+ */
+router.delete('/badges/revoke/:userId/:badgeId', adminController.revokeBadge);
 
 module.exports = router;

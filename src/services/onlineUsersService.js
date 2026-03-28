@@ -26,7 +26,7 @@ class OnlineUsersService {
     const offset = (page - 1) * limit;
     const { rows, count } = await User.findAndCountAll({
       where,
-      attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'gender', 'location', 'bio', 'interests', 'isOnline', 'occupation'],
+      attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'gender', 'location', 'bio', 'interests', 'isOnline', 'lastSeen', 'occupation'],
       include: [{ model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'sortOrder'], limit: 3 }],
       order: [
         ['isOnline', 'DESC'],    // Online users first
@@ -139,9 +139,57 @@ class OnlineUsersService {
     return await randomChatRepository.getMessages(chatId, page, limit);
   }
 
-  // ── Get My Chats ────────────────────────────────────────
+  // ── Get My Chats (active only) ─────────────────────────
   async getMyChats(userId, page = 1, limit = 20) {
     return await randomChatRepository.findActiveChatsForUser(userId, page, limit);
+  }
+
+  // ── Get Chat History (all chats: active + ended) ──────
+  async getChatHistory(userId, page = 1, limit = 20, status = null) {
+    return await randomChatRepository.getChatHistory(userId, page, limit, status);
+  }
+
+  // ── Get Chat Detail ─────────────────────────────────────
+  async getChatDetail(chatId, userId) {
+    const chat = await randomChatRepository.getChatDetail(chatId);
+    if (!chat) throw new Error('Chat not found');
+    if (chat.user1Id !== userId && chat.user2Id !== userId) {
+      throw new Error('You are not part of this chat');
+    }
+
+    const otherUser = chat.user1Id === userId ? chat.User2 : chat.User1;
+    return {
+      chatId: chat.id,
+      status: chat.status,
+      otherUser: otherUser ? {
+        id: otherUser.id,
+        firstName: otherUser.firstName,
+        lastName: otherUser.lastName,
+        profilePicture: otherUser.profilePicture,
+        isOnline: connectedUsers.has(otherUser.id) || otherUser.isOnline,
+        lastSeen: otherUser.lastSeen,
+        age: otherUser.age,
+        location: otherUser.location,
+        bio: otherUser.bio,
+        occupation: otherUser.occupation
+      } : null,
+      totalMessages: chat.totalMessages,
+      totalSpent: chat.totalSpent,
+      startedAt: chat.startedAt,
+      endedAt: chat.endedAt,
+      createdAt: chat.createdAt
+    };
+  }
+
+  // ── Delete Chat ─────────────────────────────────────────
+  async deleteChat(chatId, userId) {
+    const chat = await randomChatRepository.findById(chatId);
+    if (!chat) throw new Error('Chat not found');
+    if (chat.user1Id !== userId && chat.user2Id !== userId) {
+      throw new Error('You are not part of this chat');
+    }
+    await randomChatRepository.deleteChat(chatId);
+    return { message: 'Chat deleted successfully' };
   }
 
   // ── End Chat ────────────────────────────────────────────
@@ -199,7 +247,8 @@ class OnlineUsersService {
       bio: user.bio,
       interests: user.interests || [],
       occupation: user.occupation,
-      isOnline
+      isOnline,
+      lastSeen: user.lastSeen || null
     };
   }
 }

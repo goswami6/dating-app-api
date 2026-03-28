@@ -6,12 +6,15 @@ const Match = require('../models/matchModel');
 const Booking = require('../models/bookingModel');
 const Call = require('../models/callModel');
 const Message = require('../models/messageModel');
-const { ShopOrder } = require('../models/shopOrderModel');
+const { ShopOrder, ShopOrderItem } = require('../models/shopOrderModel');
 const ShopProduct = require('../models/shopProductModel');
 const ShopCategory = require('../models/shopCategoryModel');
+const ShopAddress = require('../models/shopAddressModel');
 const WalletTransaction = require('../models/walletTransactionModel');
 const SubscriptionPlan = require('../models/subscriptionPlanModel');
-const Subscription = require('../models/subscriptionModel');
+const Subscription = require('../models/userSubscriptionModel');
+const Badge = require('../models/badgeModel');
+const UserBadge = require('../models/userBadgeModel');
 
 class AdminController {
 
@@ -275,13 +278,166 @@ class AdminController {
       const { count, rows } = await ShopOrder.findAndCountAll({
         include: [
           { model: User, attributes: ['id', 'firstName', 'lastName'] },
+          { model: ShopOrderItem, as: 'Items', attributes: ['id'] },
         ],
         order: [['createdAt', 'DESC']],
         limit,
         offset,
+        distinct: true,
       });
 
       return apiResponse.success(res, 'Orders list', { orders: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Product CRUD ───────────────────────────────────
+
+  async createProduct(req, res) {
+    try {
+      const { categoryId, name, description, shortDescription, price, compareAtPrice, currency, images, thumbnail, sku, stock, isActive, isFeatured, tags, attributes, icon } = req.body;
+      if (!categoryId || !name || !price) return apiResponse.error(res, 'categoryId, name and price are required', 400);
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const product = await ShopProduct.create({
+        categoryId, name, slug, description, shortDescription,
+        price: parseFloat(price), compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        currency: currency || 'INR', images: images || [], thumbnail, sku,
+        stock: parseInt(stock) || 0, isActive: isActive !== false,
+        isFeatured: isFeatured === true, tags: tags || [], attributes: attributes || null, icon,
+      });
+      return apiResponse.success(res, 'Product created', product, 201);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Product with this name/sku already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async updateProduct(req, res) {
+    try {
+      const product = await ShopProduct.findByPk(req.params.id);
+      if (!product) return apiResponse.error(res, 'Product not found', 404);
+      const { categoryId, name, description, shortDescription, price, compareAtPrice, currency, images, thumbnail, sku, stock, isActive, isFeatured, tags, attributes, icon } = req.body;
+      const updates = {};
+      if (categoryId !== undefined) updates.categoryId = categoryId;
+      if (name !== undefined) { updates.name = name; updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+      if (description !== undefined) updates.description = description;
+      if (shortDescription !== undefined) updates.shortDescription = shortDescription;
+      if (price !== undefined) updates.price = parseFloat(price);
+      if (compareAtPrice !== undefined) updates.compareAtPrice = compareAtPrice ? parseFloat(compareAtPrice) : null;
+      if (currency !== undefined) updates.currency = currency;
+      if (images !== undefined) updates.images = images;
+      if (thumbnail !== undefined) updates.thumbnail = thumbnail;
+      if (sku !== undefined) updates.sku = sku;
+      if (stock !== undefined) updates.stock = parseInt(stock);
+      if (isActive !== undefined) updates.isActive = isActive;
+      if (isFeatured !== undefined) updates.isFeatured = isFeatured;
+      if (tags !== undefined) updates.tags = tags;
+      if (attributes !== undefined) updates.attributes = attributes;
+      if (icon !== undefined) updates.icon = icon;
+      await product.update(updates);
+      return apiResponse.success(res, 'Product updated', product);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Product with this name/sku already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async deleteProduct(req, res) {
+    try {
+      const product = await ShopProduct.findByPk(req.params.id);
+      if (!product) return apiResponse.error(res, 'Product not found', 404);
+      await product.destroy();
+      return apiResponse.success(res, 'Product deleted');
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Category CRUD ──────────────────────────────────
+
+  async createCategory(req, res) {
+    try {
+      const { name, description, image, parentId, sortOrder, isActive } = req.body;
+      if (!name) return apiResponse.error(res, 'Category name is required', 400);
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const category = await ShopCategory.create({
+        name, slug, description, image, parentId: parentId || null,
+        sortOrder: parseInt(sortOrder) || 0, isActive: isActive !== false,
+      });
+      return apiResponse.success(res, 'Category created', category, 201);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Category name already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async updateCategory(req, res) {
+    try {
+      const category = await ShopCategory.findByPk(req.params.id);
+      if (!category) return apiResponse.error(res, 'Category not found', 404);
+      const { name, description, image, parentId, sortOrder, isActive } = req.body;
+      const updates = {};
+      if (name !== undefined) { updates.name = name; updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+      if (description !== undefined) updates.description = description;
+      if (image !== undefined) updates.image = image;
+      if (parentId !== undefined) updates.parentId = parentId || null;
+      if (sortOrder !== undefined) updates.sortOrder = parseInt(sortOrder);
+      if (isActive !== undefined) updates.isActive = isActive;
+      await category.update(updates);
+      return apiResponse.success(res, 'Category updated', category);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Category name already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async deleteCategory(req, res) {
+    try {
+      const category = await ShopCategory.findByPk(req.params.id);
+      if (!category) return apiResponse.error(res, 'Category not found', 404);
+      const productCount = await ShopProduct.count({ where: { categoryId: category.id } });
+      if (productCount > 0) return apiResponse.error(res, `Cannot delete — ${productCount} products belong to this category`, 400);
+      await category.destroy();
+      return apiResponse.success(res, 'Category deleted');
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Order Management ───────────────────────────────
+
+  async getOrderDetail(req, res) {
+    try {
+      const order = await ShopOrder.findByPk(req.params.id, {
+        include: [
+          { model: User, attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: ShopAddress, as: 'Address' },
+          { model: ShopOrderItem, as: 'Items', include: [{ model: ShopProduct, as: 'Product', attributes: ['id', 'name', 'icon', 'thumbnail'] }] },
+        ],
+      });
+      if (!order) return apiResponse.error(res, 'Order not found', 404);
+      return apiResponse.success(res, 'Order detail', order);
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async updateOrderStatus(req, res) {
+    try {
+      const order = await ShopOrder.findByPk(req.params.id);
+      if (!order) return apiResponse.error(res, 'Order not found', 404);
+      const { status, paymentStatus, cancelReason } = req.body;
+      const updates = {};
+      if (status) {
+        updates.status = status;
+        if (status === 'shipped') updates.shippedAt = new Date();
+        if (status === 'delivered') updates.deliveredAt = new Date();
+        if (status === 'cancelled') { updates.cancelledAt = new Date(); if (cancelReason) updates.cancelReason = cancelReason; }
+      }
+      if (paymentStatus) updates.paymentStatus = paymentStatus;
+      await order.update(updates);
+      return apiResponse.success(res, 'Order updated', order);
     } catch (err) {
       return apiResponse.error(res, err.message);
     }
@@ -431,6 +587,157 @@ class AdminController {
       });
 
       return apiResponse.success(res, 'Subscriptions list', { subscriptions: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Badge Stats ──────────────────────────────────
+
+  async statsBadges(req, res) {
+    try {
+      const [totalBadges, totalAwarded, premiumBadges] = await Promise.all([
+        Badge.count(),
+        UserBadge.count(),
+        Badge.count({ where: { isPremium: true } }),
+      ]);
+      return apiResponse.success(res, 'Badge stats', { totalBadges, totalAwarded, premiumBadges });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Badges CRUD ────────────────────────────────────
+
+  async getBadges(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await Badge.findAndCountAll({
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      });
+      return apiResponse.success(res, 'Badges list', { badges: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async createBadge(req, res) {
+    try {
+      const { name, icon, description, requiredMonth, color, isPremium } = req.body;
+      if (!name || !icon) return apiResponse.error(res, 'name and icon are required', 400);
+      const badge = await Badge.create({
+        name, icon, description: description || null,
+        requiredMonth: parseInt(requiredMonth) || 0,
+        color: color || '#FF4081', isPremium: isPremium === true,
+      });
+      return apiResponse.success(res, 'Badge created', badge, 201);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Badge name already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async updateBadge(req, res) {
+    try {
+      const badge = await Badge.findByPk(req.params.id);
+      if (!badge) return apiResponse.error(res, 'Badge not found', 404);
+      const { name, icon, description, requiredMonth, color, isPremium } = req.body;
+      await badge.update({
+        ...(name !== undefined && { name }),
+        ...(icon !== undefined && { icon }),
+        ...(description !== undefined && { description }),
+        ...(requiredMonth !== undefined && { requiredMonth: parseInt(requiredMonth) }),
+        ...(color !== undefined && { color }),
+        ...(isPremium !== undefined && { isPremium }),
+      });
+      return apiResponse.success(res, 'Badge updated', badge);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') return apiResponse.error(res, 'Badge name already exists', 409);
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async deleteBadge(req, res) {
+    try {
+      const badge = await Badge.findByPk(req.params.id);
+      if (!badge) return apiResponse.error(res, 'Badge not found', 404);
+      await UserBadge.destroy({ where: { badgeId: badge.id } });
+      await badge.destroy();
+      return apiResponse.success(res, 'Badge deleted');
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── User Badges (Award / Revoke) ───────────────────
+
+  async getUserBadges(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
+      const badgeId = req.query.badgeId || '';
+      const search = req.query.search || '';
+
+      const where = {};
+      if (badgeId) where.badgeId = badgeId;
+
+      const includeUser = { model: User, attributes: ['id', 'firstName', 'lastName', 'email'] };
+      if (search) {
+        includeUser.where = {
+          [Op.or]: [
+            { firstName: { [Op.like]: `%${search}%` } },
+            { lastName: { [Op.like]: `%${search}%` } },
+            { email: { [Op.like]: `%${search}%` } },
+          ],
+        };
+      }
+
+      const { count, rows } = await UserBadge.findAndCountAll({
+        where,
+        include: [
+          includeUser,
+          { model: Badge, as: 'Badge', attributes: ['id', 'name', 'icon', 'color'] },
+        ],
+        order: [['earnedAt', 'DESC']],
+        limit,
+        offset,
+      });
+      return apiResponse.success(res, 'User badges', { userBadges: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async awardBadge(req, res) {
+    try {
+      const { userId, badgeId } = req.body;
+      if (!userId || !badgeId) return apiResponse.error(res, 'userId and badgeId are required', 400);
+      const user = await User.findByPk(userId);
+      if (!user) return apiResponse.error(res, 'User not found', 404);
+      const badge = await Badge.findByPk(badgeId);
+      if (!badge) return apiResponse.error(res, 'Badge not found', 404);
+      const existing = await UserBadge.findOne({ where: { userId, badgeId } });
+      if (existing) return apiResponse.error(res, 'User already has this badge', 409);
+      const userBadge = await UserBadge.create({ userId, badgeId, earnedAt: new Date() });
+      return apiResponse.success(res, 'Badge awarded', userBadge, 201);
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async revokeBadge(req, res) {
+    try {
+      const { userId, badgeId } = req.params;
+      const userBadge = await UserBadge.findOne({ where: { userId, badgeId } });
+      if (!userBadge) return apiResponse.error(res, 'User badge not found', 404);
+      await userBadge.destroy();
+      return apiResponse.success(res, 'Badge revoked');
     } catch (err) {
       return apiResponse.error(res, err.message);
     }

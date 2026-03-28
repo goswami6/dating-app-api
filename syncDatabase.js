@@ -17,6 +17,14 @@ async function ensureUserAdminColumn() {
             });
             console.log('Added isAdmin column to users table');
         }
+        if (!tableDefinition.lastSeen) {
+            await queryInterface.addColumn('users', 'lastSeen', {
+                type: DataTypes.DATE,
+                allowNull: true,
+                comment: 'Last time user was online',
+            });
+            console.log('Added lastSeen column to users table');
+        }
     } catch (err) {
         console.log('ensureUserAdminColumn skipped:', err.message);
     }

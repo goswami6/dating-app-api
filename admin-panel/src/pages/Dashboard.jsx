@@ -7,6 +7,7 @@ import {
   HiOutlinePhone,
   HiOutlineShoppingBag,
   HiOutlineCreditCard,
+  HiOutlineTrophy,
 } from 'react-icons/hi2';
 import './Dashboard.css';
 
@@ -20,13 +21,14 @@ export default function Dashboard() {
 
   const loadStats = async () => {
     try {
-      const [users, matches, bookings, calls, orders, subscriptions] = await Promise.all([
+      const [users, matches, bookings, calls, orders, subscriptions, badges] = await Promise.all([
         api.get('/admin/stats/users').catch(() => ({ data: { data: { total: 0, active: 0, premium: 0, online: 0 } } })),
         api.get('/admin/stats/matches').catch(() => ({ data: { data: { total: 0, mutual: 0 } } })),
         api.get('/admin/stats/bookings').catch(() => ({ data: { data: { total: 0, pending: 0, accepted: 0 } } })),
         api.get('/admin/stats/calls').catch(() => ({ data: { data: { total: 0, ongoing: 0 } } })),
         api.get('/admin/stats/orders').catch(() => ({ data: { data: { total: 0, revenue: 0 } } })),
         api.get('/admin/stats/subscriptions').catch(() => ({ data: { data: { totalPlans: 0, activePlans: 0, totalSubscribers: 0, activeSubscribers: 0 } } })),
+        api.get('/admin/stats/badges').catch(() => ({ data: { data: { totalBadges: 0, totalAwarded: 0, premiumBadges: 0 } } })),
       ]);
 
       setStats({
@@ -36,6 +38,7 @@ export default function Dashboard() {
         calls: calls.data.data,
         orders: orders.data.data,
         subscriptions: subscriptions.data.data,
+        badges: badges.data.data,
       });
     } catch {
       // Stats will show 0s
@@ -52,6 +55,7 @@ export default function Dashboard() {
     { icon: HiOutlineCalendar, label: 'Bookings', value: stats?.bookings?.total || 0, sub: `${stats?.bookings?.pending || 0} pending`, color: '#00b894' },
     { icon: HiOutlinePhone, label: 'Calls', value: stats?.calls?.total || 0, sub: `${stats?.calls?.ongoing || 0} ongoing`, color: '#0984e3' },
     { icon: HiOutlineShoppingBag, label: 'Orders', value: stats?.orders?.total || 0, sub: `₹${stats?.orders?.revenue || 0} revenue`, color: '#fdcb6e' },
+    { icon: HiOutlineTrophy, label: 'Badges', value: stats?.badges?.totalBadges || 0, sub: `${stats?.badges?.totalAwarded || 0} awarded · ${stats?.badges?.premiumBadges || 0} premium`, color: '#fd79a8' },
   ];
 
   if (loading) return <div className="loading">Loading dashboard...</div>;

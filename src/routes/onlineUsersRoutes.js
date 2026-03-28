@@ -492,4 +492,220 @@ router.post('/:userId/call', authMiddleware, onlineUsersController.initiateCall)
  */
 router.get('/call-history', authMiddleware, onlineUsersController.getCallHistory);
 
+/**
+ * @swagger
+ * /api/online-users/chat-history:
+ *   get:
+ *     summary: Get full chat history (active + ended)
+ *     description: Retrieve paginated chat history including last message, unread count, and other user info. Optionally filter by status.
+ *     tags: [Online Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-api-key
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, ended, blocked]
+ *         description: Filter by chat status (omit to get all)
+ *     responses:
+ *       200:
+ *         description: Chat history with last message and unread count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chats:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           chatId:
+ *                             type: integer
+ *                           status:
+ *                             type: string
+ *                             enum: [active, ended, blocked]
+ *                           otherUser:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: integer
+ *                               firstName:
+ *                                 type: string
+ *                               lastName:
+ *                                 type: string
+ *                               profilePicture:
+ *                                 type: string
+ *                               isOnline:
+ *                                 type: boolean
+ *                               lastSeen:
+ *                                 type: string
+ *                                 format: date-time
+ *                               age:
+ *                                 type: integer
+ *                               location:
+ *                                 type: string
+ *                           lastMessage:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: integer
+ *                               text:
+ *                                 type: string
+ *                               messageType:
+ *                                 type: string
+ *                                 enum: [text, image, gif, voice]
+ *                               senderId:
+ *                                 type: integer
+ *                               sentAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                               isRead:
+ *                                 type: boolean
+ *                           unreadCount:
+ *                             type: integer
+ *                           totalMessages:
+ *                             type: integer
+ *                           totalSpent:
+ *                             type: number
+ *                           startedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           endedAt:
+ *                             type: string
+ *                             format: date-time
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ */
+router.get('/chat-history', authMiddleware, onlineUsersController.getChatHistory);
+
+/**
+ * @swagger
+ * /api/online-users/chat/{chatId}/details:
+ *   get:
+ *     summary: Get detailed info about a single chat
+ *     description: Retrieve full details of a chat including other user profile info, stats, and timestamps
+ *     tags: [Online Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-api-key
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Chat detail
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chatId:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                     otherUser:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         profilePicture:
+ *                           type: string
+ *                         isOnline:
+ *                           type: boolean
+ *                         lastSeen:
+ *                           type: string
+ *                           format: date-time
+ *                         age:
+ *                           type: integer
+ *                         location:
+ *                           type: string
+ *                         bio:
+ *                           type: string
+ *                         occupation:
+ *                           type: string
+ *                     totalMessages:
+ *                       type: integer
+ *                     totalSpent:
+ *                       type: number
+ *                     startedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     endedAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: Chat not found
+ */
+router.get('/chat/:chatId/details', authMiddleware, onlineUsersController.getChatDetail);
+
+/**
+ * @swagger
+ * /api/online-users/chat/{chatId}:
+ *   delete:
+ *     summary: Delete a chat from history
+ *     description: Permanently delete a chat and all its messages
+ *     tags: [Online Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-api-key
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Chat deleted successfully
+ *       404:
+ *         description: Chat not found
+ */
+router.delete('/chat/:chatId', authMiddleware, onlineUsersController.deleteChat);
+
 module.exports = router;

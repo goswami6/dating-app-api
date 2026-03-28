@@ -52,7 +52,7 @@ class MatchRepository {
                 {
                     model: User,
                     as: 'Initiator',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'lastSeen', 'occupation', 'education', 'bio', 'interests'],
                     include: [
                         { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
                         { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }
@@ -61,7 +61,7 @@ class MatchRepository {
                 {
                     model: User,
                     as: 'MatchedUser',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'occupation', 'education', 'bio', 'interests'],
+                    attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'age', 'location', 'isOnline', 'lastSeen', 'occupation', 'education', 'bio', 'interests'],
                     include: [
                         { model: UserPhoto, as: 'Photos', attributes: ['id', 'url', 'isPrimary', 'sortOrder'], order: [['sortOrder', 'ASC']] },
                         { model: Badge, as: 'Badges', attributes: ['id', 'name', 'icon', 'description', 'requiredMonth', 'color', 'isPremium'], through: { attributes: [] } }

@@ -14,6 +14,8 @@ import {
   HiOutlineXMark,
   HiOutlineArrowRightOnRectangle,
   HiOutlineCreditCard,
+  HiOutlineTrophy,
+  HiOutlineTruck,
 } from 'react-icons/hi2';
 import './Layout.css';
 
@@ -25,8 +27,10 @@ const navItems = [
   { to: '/calls', icon: HiOutlinePhone, label: 'Calls' },
   { to: '/messages', icon: HiOutlineChatBubbleLeftRight, label: 'Messages' },
   { to: '/shop', icon: HiOutlineShoppingBag, label: 'Shop' },
+  { to: '/product-orders', icon: HiOutlineTruck, label: 'Product Orders' },
   { to: '/wallet', icon: HiOutlineWallet, label: 'Wallet' },
   { to: '/subscriptions', icon: HiOutlineCreditCard, label: 'Subscriptions' },
+  { to: '/badges', icon: HiOutlineTrophy, label: 'Badges' },
 ];
 
 export default function Layout({ children }) {

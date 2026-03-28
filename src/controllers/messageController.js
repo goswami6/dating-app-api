@@ -92,6 +92,26 @@ class MessageController {
       const { matchId } = req.body;
       if (!matchId) return apiResponse.error(res, 'matchId is required', 400);
       const result = await messageService.markAsRead(parseInt(matchId), req.user.id);
+
+      // Emit socket event so sender knows their messages were seen
+      try {
+        const { Match } = require('../models');
+        const { Op } = require('sequelize');
+        const match = await Match.findOne({
+          where: { id: parseInt(matchId), [Op.or]: [{ userId: req.user.id }, { matchedUserId: req.user.id }] }
+        });
+        if (match) {
+          const otherId = match.userId === req.user.id ? match.matchedUserId : match.userId;
+          const io = req.app.get('io');
+          if (io) {
+            io.to(`user_${otherId}`).emit('message:seen', {
+              matchId: parseInt(matchId), readBy: req.user.id,
+              count: result.markedRead, readAt: new Date()
+            });
+          }
+        }
+      } catch (_) { /* socket emit is best-effort */ }
+
       return apiResponse.success(res, 'Messages marked as read', result);
     } catch (error) {
       return apiResponse.error(res, error.message, 400);

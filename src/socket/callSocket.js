@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const callService = require('../services/callService');
 const walletService = require('../services/walletService');
 const bookingService = require('../services/bookingService');
+const { User, Message, Match } = require('../models');
+const { Op } = require('sequelize');
 
 // Track connected users: userId -> socketId
 const connectedUsers = new Map();
@@ -21,13 +23,20 @@ function setupSocketHandlers(io) {
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     const userId = socket.userId;
     connectedUsers.set(userId, socket.id);
 
     // Join user's personal room for targeted events
     socket.join(`user_${userId}`);
     console.log(`User ${userId} connected (socket: ${socket.id})`);
+
+    // ─── Update DB isOnline = true ───
+    try {
+      await User.update({ isOnline: true }, { where: { id: userId } });
+    } catch (err) {
+      console.error('Failed to set user online:', err.message);
+    }
 
     // ─── Call Initiation via Socket ───
 
@@ -398,6 +407,123 @@ function setupSocketHandlers(io) {
       });
     });
 
+    // ─── Match Messaging via Socket ───
+
+    // Send text message in a match conversation
+    socket.on('message:send', async (data, ack) => {
+      try {
+        const { matchId, text, messageType = 'text', mediaUrl = null, replyToId = null } = data || {};
+        if (!matchId || (!text && !mediaUrl)) {
+          const err = { success: false, message: 'matchId and text (or mediaUrl) are required' };
+          if (typeof ack === 'function') ack(err);
+          return;
+        }
+
+        // Verify user belongs to match
+        const match = await Match.findOne({
+          where: { id: matchId, [Op.or]: [{ userId }, { matchedUserId: userId }] }
+        });
+        if (!match || match.status === 'blocked') {
+          const err = { success: false, message: 'Match not found or blocked' };
+          if (typeof ack === 'function') ack(err);
+          return;
+        }
+
+        // Create message in DB
+        const message = await Message.create({
+          matchId, senderId: userId, text: text || null,
+          messageType, mediaUrl, replyToId,
+        });
+
+        const msgData = {
+          id: message.id, matchId, senderId: userId, text: message.text,
+          messageType: message.messageType, mediaUrl: message.mediaUrl,
+          replyToId: message.replyToId, sentAt: message.sentAt,
+          isRead: false, isDelivered: false,
+        };
+
+        // Determine the other user
+        const otherId = match.userId === userId ? match.matchedUserId : match.userId;
+
+        // Send to recipient in real-time
+        io.to(`user_${otherId}`).emit('message:new', msgData);
+
+        // Auto-mark as delivered if recipient is connected
+        if (connectedUsers.has(otherId) || connectedUsers.has(String(otherId))) {
+          await Message.update({ isDelivered: true, deliveredAt: new Date() }, { where: { id: message.id } });
+          socket.emit('message:delivered', { messageId: message.id, matchId });
+        }
+
+        if (typeof ack === 'function') ack({ success: true, message: msgData });
+      } catch (err) {
+        if (typeof ack === 'function') ack({ success: false, message: err.message });
+      }
+    });
+
+    // Mark messages as read and notify the sender in real-time
+    socket.on('message:read', async (data, ack) => {
+      try {
+        const { matchId } = data || {};
+        if (!matchId) {
+          if (typeof ack === 'function') ack({ success: false, message: 'matchId is required' });
+          return;
+        }
+
+        const match = await Match.findOne({
+          where: { id: matchId, [Op.or]: [{ userId }, { matchedUserId: userId }] }
+        });
+        if (!match) {
+          if (typeof ack === 'function') ack({ success: false, message: 'Match not found' });
+          return;
+        }
+
+        // Mark all messages from the OTHER user as read
+        const [count] = await Message.update(
+          { isRead: true, readAt: new Date() },
+          { where: { matchId, senderId: { [Op.ne]: userId }, isRead: false } }
+        );
+
+        // Notify the sender that their messages were read
+        const otherId = match.userId === userId ? match.matchedUserId : match.userId;
+        io.to(`user_${otherId}`).emit('message:seen', { matchId, readBy: userId, count, readAt: new Date() });
+
+        if (typeof ack === 'function') ack({ success: true, markedRead: count });
+      } catch (err) {
+        if (typeof ack === 'function') ack({ success: false, message: err.message });
+      }
+    });
+
+    // Typing indicator for match conversations
+    socket.on('message:typing', async ({ matchId }) => {
+      try {
+        const match = await Match.findOne({
+          where: { id: matchId, [Op.or]: [{ userId }, { matchedUserId: userId }] }
+        });
+        if (!match) return;
+        const otherId = match.userId === userId ? match.matchedUserId : match.userId;
+        io.to(`user_${otherId}`).emit('message:typing', { matchId, userId });
+      } catch (err) { /* ignore */ }
+    });
+
+    // Stop typing for match conversations
+    socket.on('message:stop-typing', async ({ matchId }) => {
+      try {
+        const match = await Match.findOne({
+          where: { id: matchId, [Op.or]: [{ userId }, { matchedUserId: userId }] }
+        });
+        if (!match) return;
+        const otherId = match.userId === userId ? match.matchedUserId : match.userId;
+        io.to(`user_${otherId}`).emit('message:stop-typing', { matchId, userId });
+      } catch (err) { /* ignore */ }
+    });
+
+    // Check if a specific user is online
+    socket.on('user:check-online', (data, ack) => {
+      const { targetUserId } = data || {};
+      const isOnline = connectedUsers.has(targetUserId) || connectedUsers.has(String(targetUserId)) || [...connectedUsers.keys()].some(k => parseInt(k) === parseInt(targetUserId));
+      if (typeof ack === 'function') ack({ userId: targetUserId, isOnline });
+    });
+
     // Broadcast online status to connected users
     io.emit('user:online', { userId });
 
@@ -407,6 +533,13 @@ function setupSocketHandlers(io) {
       connectedUsers.delete(userId);
       io.emit('user:offline', { userId });
       console.log(`User ${userId} disconnected`);
+
+      // ─── Update DB isOnline = false, lastSeen ───
+      try {
+        await User.update({ isOnline: false, lastSeen: new Date() }, { where: { id: userId } });
+      } catch (err) {
+        console.error('Failed to set user offline:', err.message);
+      }
 
       try {
         const activeCall = await callService.getActiveCall(userId);

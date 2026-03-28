@@ -183,8 +183,8 @@ class MessageRepository {
                 status: 'mutual_match'
             },
             include: [
-                { model: User, as: 'Initiator', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline'] },
-                { model: User, as: 'MatchedUser', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline'] }
+                { model: User, as: 'Initiator', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen'] },
+                { model: User, as: 'MatchedUser', attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'lastSeen'] }
             ],
             order: [['updatedAt', 'DESC']]
         });

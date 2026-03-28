@@ -85,6 +85,44 @@ class OnlineUsersController {
     }
   }
 
+  // GET /api/online-users/chat-history
+  async getChatHistory(req, res) {
+    try {
+      const userId = req.user.id;
+      const { page, limit, status } = req.query;
+      const result = await onlineUsersService.getChatHistory(userId, page, limit, status || null);
+      return success(res, 'Chat history fetched successfully', result);
+    } catch (err) {
+      return error(res, err.message, 500);
+    }
+  }
+
+  // GET /api/online-users/chat/:chatId/details
+  async getChatDetail(req, res) {
+    try {
+      const userId = req.user.id;
+      const chatId = parseInt(req.params.chatId);
+      const result = await onlineUsersService.getChatDetail(chatId, userId);
+      return success(res, 'Chat detail fetched successfully', result);
+    } catch (err) {
+      if (err.message.includes('not found') || err.message.includes('not part')) return error(res, err.message, 404);
+      return error(res, err.message, 500);
+    }
+  }
+
+  // DELETE /api/online-users/chat/:chatId
+  async deleteChat(req, res) {
+    try {
+      const userId = req.user.id;
+      const chatId = parseInt(req.params.chatId);
+      const result = await onlineUsersService.deleteChat(chatId, userId);
+      return success(res, result.message);
+    } catch (err) {
+      if (err.message.includes('not found') || err.message.includes('not part')) return error(res, err.message, 404);
+      return error(res, err.message, 400);
+    }
+  }
+
   // POST /api/online-users/:userId/call
   async initiateCall(req, res) {
     try {

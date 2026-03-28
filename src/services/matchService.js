@@ -121,6 +121,7 @@ class MatchService {
                     bio: otherUser.bio,
                     interests: otherUser.interests || [],
                     isOnline: otherUser.isOnline || false,
+                    lastSeen: otherUser.lastSeen || null,
                     occupation: otherUser.occupation,
                     education: otherUser.education,
                     badges

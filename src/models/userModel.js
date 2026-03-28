@@ -91,6 +91,11 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  lastSeen: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Last time user was online'
+  },
   preferences: {
     type: DataTypes.JSON,
     allowNull: true,
