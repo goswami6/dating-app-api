@@ -168,7 +168,7 @@ router.post('/:userId/start-chat', authMiddleware, onlineUsersController.startCh
  * @swagger
  * /api/online-users/chat/{chatId}/message:
  *   post:
- *     summary: Send a message in a random chat session (₹2 per message from wallet)
+ *     summary: Send a message in a random chat session (₹2 charged per session, not per message)
  *     tags: [Online Users]
  *     security:
  *       - bearerAuth: []
@@ -197,7 +197,7 @@ router.post('/:userId/start-chat', authMiddleware, onlineUsersController.startCh
  *                 example: "Hey! How are you?"
  *     responses:
  *       201:
- *         description: Message sent and wallet deducted
+ *         description: Message sent
  *         content:
  *           application/json:
  *             schema:
@@ -219,11 +219,6 @@ router.post('/:userId/start-chat', authMiddleware, onlineUsersController.startCh
  *                     sentAt:
  *                       type: string
  *                       format: date-time
- *                     walletDeducted:
- *                       type: number
- *                       example: 2
- *       402:
- *         description: Insufficient wallet balance
  *       404:
  *         description: Chat not found
  */
@@ -385,5 +380,116 @@ router.put('/chat/:chatId/end', authMiddleware, onlineUsersController.endChat);
  *         description: User not found
  */
 router.post('/:userId/call', authMiddleware, onlineUsersController.initiateCall);
+
+/**
+ * @swagger
+ * /api/online-users/call-history:
+ *   get:
+ *     summary: Get call history with wallet cost details
+ *     description: Retrieve paginated call history for the authenticated user with wallet deduction info (cost, rate, duration)
+ *     tags: [Online Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-api-key
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: callType
+ *         schema:
+ *           type: string
+ *           enum: [voice, video]
+ *         description: Filter by call type
+ *     responses:
+ *       200:
+ *         description: Call history with wallet cost
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     calls:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           callerId:
+ *                             type: integer
+ *                           receiverId:
+ *                             type: integer
+ *                           callType:
+ *                             type: string
+ *                             enum: [voice, video]
+ *                           status:
+ *                             type: string
+ *                           duration:
+ *                             type: integer
+ *                             description: Duration in seconds
+ *                           durationMinutes:
+ *                             type: integer
+ *                             description: Duration in minutes (rounded up)
+ *                           walletCost:
+ *                             type: number
+ *                             description: Total wallet amount deducted (₹)
+ *                           ratePerMinute:
+ *                             type: number
+ *                             description: Rate per minute (₹5 voice, ₹10 video)
+ *                           currency:
+ *                             type: string
+ *                             example: INR
+ *                           endReason:
+ *                             type: string
+ *                           Caller:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: integer
+ *                               firstName:
+ *                                 type: string
+ *                               lastName:
+ *                                 type: string
+ *                               profilePicture:
+ *                                 type: string
+ *                           Receiver:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: integer
+ *                               firstName:
+ *                                 type: string
+ *                               lastName:
+ *                                 type: string
+ *                               profilePicture:
+ *                                 type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ */
+router.get('/call-history', authMiddleware, onlineUsersController.getCallHistory);
 
 module.exports = router;

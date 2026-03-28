@@ -1,4 +1,5 @@
 const onlineUsersService = require('../services/onlineUsersService');
+const callService = require('../services/callService');
 const { success, error } = require('../utils/apiResponse');
 
 class OnlineUsersController {
@@ -105,6 +106,18 @@ class OnlineUsersController {
       if (err.message.includes('not found')) return error(res, err.message, 404);
       if (err.message.includes('offline')) return error(res, err.message, 400);
       return error(res, err.message, 400);
+    }
+  }
+
+  // GET /api/online-users/call-history
+  async getCallHistory(req, res) {
+    try {
+      const userId = req.user.id;
+      const { page, limit, callType } = req.query;
+      const result = await callService.getCallHistory(userId, { page, limit, callType });
+      return success(res, 'Call history fetched successfully', result);
+    } catch (err) {
+      return error(res, err.message, 500);
     }
   }
 }
