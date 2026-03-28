@@ -15,6 +15,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  * /api/subscriptions/plans:
  *   get:
  *     summary: Get all available subscription plans
+ *     description: Returns all active subscription plans (Plus, Gold, Platinum) with weekly pricing in INR
  *     tags: [Subscriptions]
  *     security:
  *       - bearerAuth: []
@@ -25,14 +26,40 @@ const authMiddleware = require('../middleware/authMiddleware');
  *         content:
  *           application/json:
  *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/SubscriptionPlan'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                         example: Tinder Gold
+ *                       tagline:
+ *                         type: string
+ *                         example: See Who Likes You and match with them instantly
+ *                       duration:
+ *                         type: integer
+ *                         example: 7
+ *                         description: Duration in days (7 = weekly)
+ *                       price:
+ *                         type: number
+ *                         example: 159
+ *                       currency:
+ *                         type: string
+ *                         example: INR
+ *                       features:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["Unlimited Likes", "See Who Likes You", "Unlimited Rewinds"]
+ *                       isActive:
+ *                         type: boolean
  */
 router.get('/plans', authMiddleware, subscriptionController.getPlans);
 

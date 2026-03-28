@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const { sequelize, User, MatchCriteria, Message, Subscription, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, RandomChat, RandomChatMessage, Booking } = require('./src/models');
+const { sequelize, User, MatchCriteria, Message, Subscription, SubscriptionPlan, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, RandomChat, RandomChatMessage, Booking } = require('./src/models');
 
 async function ensureUserAdminColumn() {
     const queryInterface = sequelize.getQueryInterface();
@@ -225,6 +225,7 @@ async function ensureMatchCriteriaColumns() {
 }
 
 async function syncDatabaseSchema() {
+    await SubscriptionPlan.sync({ alter: true });
     await MatchCriteria.sync();
     await ensureMatchCriteriaColumns();
     await ensureUserAdminColumn();
@@ -243,6 +244,81 @@ async function syncDatabaseSchema() {
     await RandomChat.sync();
     await RandomChatMessage.sync();
     await Booking.sync();
+}
+
+async function seedSubscriptionPlans() {
+    try {
+        const existingPlans = await SubscriptionPlan.count();
+        if (existingPlans > 0) {
+            console.log('Subscription plans already seeded, skipping...');
+            return;
+        }
+
+        const plans = [
+            {
+                name: 'Tinder Plus',
+                tagline: 'Unlimited Likes. Unlimited Rewinds. Unlimited Passport Mode. No Ads.',
+                duration: 7,
+                price: 99,
+                currency: 'INR',
+                features: [
+                    'Unlimited Likes',
+                    'Unlimited Rewinds',
+                    'Unlimited Passport Mode',
+                    'Control Your Profile',
+                    'Control Who Sees You',
+                    'Control Who You See',
+                    'Hide Ads'
+                ],
+                isActive: true
+            },
+            {
+                name: 'Tinder Gold',
+                tagline: 'See Who Likes You and match with them instantly',
+                duration: 7,
+                price: 159,
+                currency: 'INR',
+                features: [
+                    'Unlimited Likes',
+                    'See Who Likes You',
+                    'Unlimited Rewinds',
+                    '2 Free Super Likes per week',
+                    'Unlimited Passport Mode',
+                    'Top Picks',
+                    'Control Your Profile',
+                    'Control Who Sees You',
+                    'Control Who You See',
+                    'Hide Ads'
+                ],
+                isActive: true
+            },
+            {
+                name: 'Tinder Platinum',
+                tagline: 'Priority Likes and Message before matching',
+                duration: 7,
+                price: 319,
+                currency: 'INR',
+                features: [
+                    'Unlimited Likes',
+                    'Unlimited Rewinds',
+                    '3 Free Super Likes per week',
+                    '3 Free First Impressions per week',
+                    'Unlimited Passport Mode',
+                    'Top Picks',
+                    'Control Your Profile',
+                    'Control Who Sees You',
+                    'Control Who You See',
+                    'Hide Ads'
+                ],
+                isActive: true
+            }
+        ];
+
+        await SubscriptionPlan.bulkCreate(plans);
+        console.log('3 subscription plans seeded (Plus, Gold, Platinum)');
+    } catch (err) {
+        console.error('Error seeding subscription plans:', err.message);
+    }
 }
 
 async function seedCategoriesAndProducts() {
@@ -359,6 +435,7 @@ async function initializeDatabase() {
         await connection.end();
 
         await syncDatabaseSchema();
+        await seedSubscriptionPlans();
         await seedCategoriesAndProducts();
         await seedAdminUser();
     } catch (error) {

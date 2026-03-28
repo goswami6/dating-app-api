@@ -11,12 +11,17 @@ const SubscriptionPlan = sequelize.define('SubscriptionPlan', {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
-        comment: 'Plan name e.g. "Gold", "Platinum", "Diamond"'
+        comment: 'Plan name e.g. "Tinder Plus", "Tinder Gold", "Tinder Platinum"'
+    },
+    tagline: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Plan tagline / short description'
     },
     duration: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        comment: 'Duration in days (e.g. 30, 90, 365)'
+        comment: 'Duration in days (e.g. 7 for weekly)'
     },
     price: {
         type: DataTypes.DECIMAL(10, 2),
@@ -24,7 +29,7 @@ const SubscriptionPlan = sequelize.define('SubscriptionPlan', {
     },
     currency: {
         type: DataTypes.STRING,
-        defaultValue: 'USD'
+        defaultValue: 'INR'
     },
     features: {
         type: DataTypes.JSON,
