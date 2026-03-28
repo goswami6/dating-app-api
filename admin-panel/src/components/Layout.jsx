@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   HiOutlineHome,
@@ -27,7 +27,7 @@ const navItems = [
   { to: '/wallet', icon: HiOutlineWallet, label: 'Wallet' },
 ];
 
-export default function Layout() {
+export default function Layout({ children }) {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function Layout() {
           <h2 className="topbar-title">Dating App Admin</h2>
         </header>
         <div className="page-content">
-          <Outlet />
+          {children}
         </div>
       </main>
     </div>
