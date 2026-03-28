@@ -6,7 +6,7 @@ import {
   HiOutlineCalendar,
   HiOutlinePhone,
   HiOutlineShoppingBag,
-  HiOutlineWallet,
+  HiOutlineCreditCard,
 } from 'react-icons/hi2';
 import './Dashboard.css';
 
@@ -20,12 +20,13 @@ export default function Dashboard() {
 
   const loadStats = async () => {
     try {
-      const [users, matches, bookings, calls, orders] = await Promise.all([
+      const [users, matches, bookings, calls, orders, subscriptions] = await Promise.all([
         api.get('/admin/stats/users').catch(() => ({ data: { data: { total: 0, active: 0, premium: 0, online: 0 } } })),
         api.get('/admin/stats/matches').catch(() => ({ data: { data: { total: 0, mutual: 0 } } })),
         api.get('/admin/stats/bookings').catch(() => ({ data: { data: { total: 0, pending: 0, accepted: 0 } } })),
         api.get('/admin/stats/calls').catch(() => ({ data: { data: { total: 0, ongoing: 0 } } })),
         api.get('/admin/stats/orders').catch(() => ({ data: { data: { total: 0, revenue: 0 } } })),
+        api.get('/admin/stats/subscriptions').catch(() => ({ data: { data: { totalPlans: 0, activePlans: 0, totalSubscribers: 0, activeSubscribers: 0 } } })),
       ]);
 
       setStats({
@@ -34,6 +35,7 @@ export default function Dashboard() {
         bookings: bookings.data.data,
         calls: calls.data.data,
         orders: orders.data.data,
+        subscriptions: subscriptions.data.data,
       });
     } catch {
       // Stats will show 0s
@@ -43,12 +45,13 @@ export default function Dashboard() {
   };
 
   const cards = [
-    { icon: HiOutlineUsers, label: 'Total Users', value: stats?.users?.total || 0, sub: `${stats?.users?.online || 0} online`, color: '#6c5ce7' },
+    { icon: HiOutlineUsers, label: 'Total Users', value: stats?.users?.total || 0, sub: `${stats?.users?.active || 0} active · ${stats?.users?.online || 0} online`, color: '#6c5ce7' },
     { icon: HiOutlineUsers, label: 'Premium Users', value: stats?.users?.premium || 0, sub: 'subscribed', color: '#e84393' },
+    { icon: HiOutlineCreditCard, label: 'Subscription Plans', value: stats?.subscriptions?.totalPlans || 0, sub: `${stats?.subscriptions?.activeSubscribers || 0} active subscribers`, color: '#a29bfe' },
     { icon: HiOutlineHeart, label: 'Total Matches', value: stats?.matches?.total || 0, sub: `${stats?.matches?.mutual || 0} mutual`, color: '#e17055' },
     { icon: HiOutlineCalendar, label: 'Bookings', value: stats?.bookings?.total || 0, sub: `${stats?.bookings?.pending || 0} pending`, color: '#00b894' },
     { icon: HiOutlinePhone, label: 'Calls', value: stats?.calls?.total || 0, sub: `${stats?.calls?.ongoing || 0} ongoing`, color: '#0984e3' },
-    { icon: HiOutlineShoppingBag, label: 'Orders', value: stats?.orders?.total || 0, sub: `₹${stats?.orders?.revenue || 0}`, color: '#fdcb6e' },
+    { icon: HiOutlineShoppingBag, label: 'Orders', value: stats?.orders?.total || 0, sub: `₹${stats?.orders?.revenue || 0} revenue`, color: '#fdcb6e' },
   ];
 
   if (loading) return <div className="loading">Loading dashboard...</div>;

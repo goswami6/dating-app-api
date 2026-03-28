@@ -13,6 +13,7 @@ import {
   HiOutlineBars3,
   HiOutlineXMark,
   HiOutlineArrowRightOnRectangle,
+  HiOutlineCreditCard,
 } from 'react-icons/hi2';
 import './Layout.css';
 
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/messages', icon: HiOutlineChatBubbleLeftRight, label: 'Messages' },
   { to: '/shop', icon: HiOutlineShoppingBag, label: 'Shop' },
   { to: '/wallet', icon: HiOutlineWallet, label: 'Wallet' },
+  { to: '/subscriptions', icon: HiOutlineCreditCard, label: 'Subscriptions' },
 ];
 
 export default function Layout({ children }) {

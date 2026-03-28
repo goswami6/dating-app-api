@@ -6,10 +6,10 @@ const apiResponse = require('../utils/apiResponse');
 
 // Admin-only middleware
 const adminMiddleware = (req, res, next) => {
-    if (!req.user || !req.user.isAdmin) {
-        return apiResponse.error(res, 'Access denied. Admin only.', 403);
-    }
-    next();
+  if (!req.user || !req.user.isAdmin) {
+    return apiResponse.error(res, 'Access denied. Admin only.', 403);
+  }
+  next();
 };
 
 // All admin routes require authentication + admin check
@@ -341,5 +341,178 @@ router.get('/shop/orders', adminController.getShopOrders);
  *         description: Paginated wallet transactions
  */
 router.get('/wallet/transactions', adminController.getWalletTransactions);
+
+// ─── Subscription Management ──────────────────────
+
+/**
+ * @swagger
+ * /api/admin/stats/subscriptions:
+ *   get:
+ *     summary: Get subscription statistics
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Subscription stats (totalPlans, activePlans, totalSubscribers, activeSubscribers)
+ */
+router.get('/stats/subscriptions', adminController.statsSubscriptions);
+
+/**
+ * @swagger
+ * /api/admin/subscriptions/plans:
+ *   get:
+ *     summary: Get paginated subscription plans
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Paginated subscription plans list
+ */
+router.get('/subscriptions/plans', adminController.getSubscriptionPlans);
+
+/**
+ * @swagger
+ * /api/admin/subscriptions/plans:
+ *   post:
+ *     summary: Create a new subscription plan
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, duration, price]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               tagline:
+ *                 type: string
+ *               duration:
+ *                 type: integer
+ *                 description: Duration in days
+ *               price:
+ *                 type: number
+ *               currency:
+ *                 type: string
+ *                 default: INR
+ *               features:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: Plan created
+ */
+router.post('/subscriptions/plans', adminController.createSubscriptionPlan);
+
+/**
+ * @swagger
+ * /api/admin/subscriptions/plans/{id}:
+ *   put:
+ *     summary: Update a subscription plan
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               tagline:
+ *                 type: string
+ *               duration:
+ *                 type: integer
+ *               price:
+ *                 type: number
+ *               currency:
+ *                 type: string
+ *               features:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Plan updated
+ */
+router.put('/subscriptions/plans/:id', adminController.updateSubscriptionPlan);
+
+/**
+ * @swagger
+ * /api/admin/subscriptions/plans/{id}:
+ *   delete:
+ *     summary: Delete a subscription plan
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Plan deleted
+ */
+router.delete('/subscriptions/plans/:id', adminController.deleteSubscriptionPlan);
+
+/**
+ * @swagger
+ * /api/admin/subscriptions:
+ *   get:
+ *     summary: Get paginated user subscriptions
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, expired, cancelled]
+ *     responses:
+ *       200:
+ *         description: Paginated user subscriptions list
+ */
+router.get('/subscriptions', adminController.getSubscriptions);
 
 module.exports = router;

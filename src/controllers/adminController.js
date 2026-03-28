@@ -10,6 +10,8 @@ const { ShopOrder } = require('../models/shopOrderModel');
 const ShopProduct = require('../models/shopProductModel');
 const ShopCategory = require('../models/shopCategoryModel');
 const WalletTransaction = require('../models/walletTransactionModel');
+const SubscriptionPlan = require('../models/subscriptionPlanModel');
+const Subscription = require('../models/subscriptionModel');
 
 class AdminController {
 
@@ -306,6 +308,129 @@ class AdminController {
       });
 
       return apiResponse.success(res, 'Wallet transactions', { transactions: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Subscription Stats ─────────────────────────────
+
+  async statsSubscriptions(req, res) {
+    try {
+      const [totalPlans, activePlans, totalSubscribers, activeSubscribers] = await Promise.all([
+        SubscriptionPlan.count(),
+        SubscriptionPlan.count({ where: { isActive: true } }),
+        Subscription.count(),
+        Subscription.count({ where: { status: 'active' } }),
+      ]);
+      const revenue = await Subscription.sum('id') ? await SubscriptionPlan.sum('price', {
+        where: { id: { [Op.in]: (await Subscription.findAll({ where: { status: 'active' }, attributes: ['planId'], raw: true })).map(s => s.planId) } }
+      }) : 0;
+      return apiResponse.success(res, 'Subscription stats', { totalPlans, activePlans, totalSubscribers, activeSubscribers });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── Subscription Plans CRUD ────────────────────────
+
+  async getSubscriptionPlans(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await SubscriptionPlan.findAndCountAll({
+        order: [['price', 'ASC']],
+        limit,
+        offset,
+      });
+
+      return apiResponse.success(res, 'Subscription plans', { plans: rows, total: count });
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async createSubscriptionPlan(req, res) {
+    try {
+      const { name, tagline, duration, price, currency, features, isActive } = req.body;
+      if (!name || !duration || !price) {
+        return apiResponse.error(res, 'name, duration and price are required', 400);
+      }
+      const plan = await SubscriptionPlan.create({
+        name, tagline, duration: parseInt(duration), price: parseFloat(price),
+        currency: currency || 'INR', features: features || [], isActive: isActive !== false,
+      });
+      return apiResponse.success(res, 'Plan created', plan, 201);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return apiResponse.error(res, 'A plan with this name already exists', 409);
+      }
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async updateSubscriptionPlan(req, res) {
+    try {
+      const plan = await SubscriptionPlan.findByPk(req.params.id);
+      if (!plan) return apiResponse.error(res, 'Plan not found', 404);
+
+      const { name, tagline, duration, price, currency, features, isActive } = req.body;
+      await plan.update({
+        ...(name !== undefined && { name }),
+        ...(tagline !== undefined && { tagline }),
+        ...(duration !== undefined && { duration: parseInt(duration) }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(currency !== undefined && { currency }),
+        ...(features !== undefined && { features }),
+        ...(isActive !== undefined && { isActive }),
+      });
+
+      return apiResponse.success(res, 'Plan updated', plan);
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return apiResponse.error(res, 'A plan with this name already exists', 409);
+      }
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  async deleteSubscriptionPlan(req, res) {
+    try {
+      const plan = await SubscriptionPlan.findByPk(req.params.id);
+      if (!plan) return apiResponse.error(res, 'Plan not found', 404);
+      await plan.destroy();
+      return apiResponse.success(res, 'Plan deleted');
+    } catch (err) {
+      return apiResponse.error(res, err.message);
+    }
+  }
+
+  // ─── User Subscriptions List ────────────────────────
+
+  async getSubscriptions(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const status = req.query.status || '';
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (status) where.status = status;
+
+      const { count, rows } = await Subscription.findAndCountAll({
+        where,
+        include: [
+          { model: User, as: 'Subscriber', attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: SubscriptionPlan, as: 'Plan', attributes: ['id', 'name', 'price', 'duration', 'currency'] },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      });
+
+      return apiResponse.success(res, 'Subscriptions list', { subscriptions: rows, total: count });
     } catch (err) {
       return apiResponse.error(res, err.message);
     }

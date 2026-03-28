@@ -11,6 +11,7 @@ import Calls from './pages/Calls';
 import Messages from './pages/Messages';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
+import Subscriptions from './pages/Subscriptions';
 
 function ProtectedRoute({ children }) {
   const { admin, loading } = useAuth();
@@ -34,6 +35,7 @@ function AppRoutes() {
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
       <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+      <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
