@@ -16,7 +16,8 @@ class OnlineUsersService {
     // Build where clause - show all active users (with online status)
     const where = {
       id: { [Op.ne]: currentUserId },
-      accountStatus: 'active'
+      accountStatus: 'active',
+      isAdmin: false
     };
     if (gender) where.gender = gender;
     if (minAge) where.age = { ...where.age, [Op.gte]: parseInt(minAge) };
@@ -48,7 +49,8 @@ class OnlineUsersService {
     if (userId === targetUserId) throw new Error('Cannot chat with yourself');
 
     // Check target user exists and is online
-    const targetUser = await User.findByPk(targetUserId, {
+    const targetUser = await User.findOne({
+      where: { id: targetUserId, isAdmin: false },
       attributes: ['id', 'firstName', 'lastName', 'profilePicture', 'isOnline', 'age', 'location', 'accountStatus']
     });
     if (!targetUser) throw new Error('User not found');
@@ -159,7 +161,7 @@ class OnlineUsersService {
   async canCallOnlineUser(callerId, receiverId, callType) {
     if (callerId === receiverId) throw new Error('Cannot call yourself');
 
-    const receiver = await User.findByPk(receiverId, { attributes: ['id', 'isOnline', 'accountStatus'] });
+    const receiver = await User.findOne({ where: { id: receiverId, isAdmin: false }, attributes: ['id', 'isOnline', 'accountStatus'] });
     if (!receiver) throw new Error('User not found');
     if (receiver.accountStatus !== 'active') throw new Error('User is not available');
 

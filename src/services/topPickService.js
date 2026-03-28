@@ -75,7 +75,8 @@ class TopPickService {
         const eligibleUsers = await User.findAll({
             where: {
                 id: { [Op.notIn]: Array.from(excludeIds) },
-                accountStatus: 'active'
+                accountStatus: 'active',
+                isAdmin: false
             },
             attributes: ['id'],
             order: sequelize.random(),

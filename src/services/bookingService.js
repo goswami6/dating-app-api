@@ -8,7 +8,7 @@ class BookingService {
     }
 
     // Check receiver exists
-    const receiver = await User.findByPk(receiverId);
+    const receiver = await User.findOne({ where: { id: receiverId, isAdmin: false } });
     if (!receiver) throw new Error('Receiver user not found');
 
     // Check no pending booking already exists between these users

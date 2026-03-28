@@ -101,6 +101,7 @@ class DiscoveryService {
     const where = {
       id: { [Op.notIn]: Array.from(excludeIds) },
       accountStatus: 'active',
+      isAdmin: false,
       age: { [Op.between]: [prefs.minAge, prefs.maxAge] }
     };
 

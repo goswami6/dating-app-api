@@ -2,14 +2,17 @@ const { User, UserPhoto } = require('../models');
 
 class UserRepository {
     async findAll(options = {}) {
+        const where = { isAdmin: false, ...(options.where || {}) };
         return await User.findAll({
             ...options,
+            where,
             include: [{ model: UserPhoto, as: 'Photos', order: [['sortOrder', 'ASC']] }],
         });
     }
 
     async findById(id) {
-        return await User.findByPk(id, {
+        return await User.findOne({
+            where: { id, isAdmin: false },
             include: [{ model: UserPhoto, as: 'Photos', order: [['sortOrder', 'ASC']] }],
         });
     }
@@ -23,7 +26,7 @@ class UserRepository {
     }
 
     async findOne(where) {
-        return await User.findOne({ where });
+        return await User.findOne({ where: { ...where, isAdmin: false } });
     }
 
     async create(data) {
