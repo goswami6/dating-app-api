@@ -13,17 +13,19 @@ import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
 
 function ProtectedRoute({ children }) {
-  const { token } = useAuth();
-  if (!token) return <Navigate to="/login" replace />;
+  const { admin, loading } = useAuth();
+  if (loading) return null;
+  if (!admin) return <Navigate to="/login" replace />;
   return <Layout>{children}</Layout>;
 }
 
 function AppRoutes() {
-  const { token } = useAuth();
+  const { admin, loading } = useAuth();
+  if (loading) return null;
 
   return (
     <Routes>
-      <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/login" element={admin ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
