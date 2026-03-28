@@ -87,7 +87,7 @@ class WalletController {
       return apiResponse.success(res, canChat ? 'Sufficient balance for chat' : 'Insufficient balance for chat', {
         canChat,
         balance: wallet.balance,
-        requiredPerMessage: walletService.getRates().chatPerMessage,
+        requiredPerSession: walletService.getRates().chatPerSession,
         currency: wallet.currency
       });
     } catch (error) {
@@ -127,8 +127,8 @@ class WalletController {
         return apiResponse.error(res, 'targetUserId is required', 400);
       }
 
-      const result = await walletService.deductForChat(userId, parseInt(targetUserId));
-      return apiResponse.success(res, 'Chat charge deducted', result);
+      const result = await walletService.deductForChatSession(userId, parseInt(targetUserId));
+      return apiResponse.success(res, 'Chat session charge deducted', result);
     } catch (error) {
       return apiResponse.error(res, error.message, 400);
     }

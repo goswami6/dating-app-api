@@ -174,6 +174,8 @@ class AdminController {
       const where = {};
       if (callType) where.callType = callType;
 
+      const CALL_RATES = { voice: 5, video: 10 };
+
       const { count, rows } = await Call.findAndCountAll({
         where,
         include: [
@@ -185,7 +187,18 @@ class AdminController {
         offset,
       });
 
-      return apiResponse.success(res, 'Calls list', { calls: rows, total: count });
+      const calls = rows.map(c => {
+        const plain = c.toJSON();
+        const durationMinutes = plain.duration ? Math.ceil(plain.duration / 60) : 0;
+        const ratePerMinute = CALL_RATES[plain.callType] || 0;
+        plain.walletCost = durationMinutes * ratePerMinute;
+        plain.ratePerMinute = ratePerMinute;
+        plain.durationMinutes = durationMinutes;
+        plain.currency = 'INR';
+        return plain;
+      });
+
+      return apiResponse.success(res, 'Calls list', { calls, total: count });
     } catch (err) {
       return apiResponse.error(res, err.message);
     }

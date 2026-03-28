@@ -58,11 +58,19 @@ class OnlineUsersService {
     const canChat = await walletService.canChat(userId);
     if (!canChat) {
       const wallet = await walletService.getWallet(userId);
-      throw new Error(`Insufficient wallet balance. Required: ₹${walletService.getRates().chatPerMessage}, Available: ₹${wallet.balance}`);
+      throw new Error(`Insufficient wallet balance. Required: ₹${walletService.getRates().chatPerSession}, Available: ₹${wallet.balance}`);
     }
 
     // Find or create chat session
     const chat = await randomChatRepository.findOrCreateChat(userId, targetUserId);
+
+    // Deduct wallet for the chat session (charged once per session, not per message)
+    await walletService.deductForChatSession(userId, targetUserId);
+
+    // Update chat stats
+    await randomChatRepository.update(chat.id, {
+      totalSpent: parseFloat(chat.totalSpent || 0) + walletService.getRates().chatPerSession
+    });
 
     return {
       chatId: chat.id,
@@ -91,14 +99,7 @@ class OnlineUsersService {
       throw new Error('You are not part of this chat');
     }
 
-    // Check wallet balance
-    const canChat = await walletService.canChat(senderId);
-    if (!canChat) {
-      const wallet = await walletService.getWallet(senderId);
-      throw new Error(`Insufficient wallet balance. Required: ₹${walletService.getRates().chatPerMessage}, Available: ₹${wallet.balance}`);
-    }
-
-    // Create message
+    // Create message (no wallet deduction here — charged per session in startChat)
     const message = await randomChatRepository.createMessage({
       chatId,
       senderId,
@@ -106,14 +107,9 @@ class OnlineUsersService {
       sentAt: new Date()
     });
 
-    // Deduct wallet
-    const targetUserId = chat.user1Id === senderId ? chat.user2Id : chat.user1Id;
-    await walletService.deductForChat(senderId, targetUserId);
-
     // Update chat stats
     await randomChatRepository.update(chatId, {
-      totalMessages: chat.totalMessages + 1,
-      totalSpent: parseFloat(chat.totalSpent) + walletService.getRates().chatPerMessage
+      totalMessages: chat.totalMessages + 1
     });
 
     return {
@@ -122,8 +118,7 @@ class OnlineUsersService {
       senderId: message.senderId,
       text: message.text,
       messageType: message.messageType,
-      sentAt: message.sentAt,
-      walletDeducted: walletService.getRates().chatPerMessage
+      sentAt: message.sentAt
     };
   }
 

@@ -2,6 +2,8 @@ const callRepository = require('../repositories/callRepository');
 const Match = require('../models/matchModel');
 const { Op } = require('sequelize');
 
+const RATES = { voice: 5, video: 10 }; // ₹ per minute
+
 class CallService {
   async initiateCall(callerId, receiverId, matchId, callType) {
     // If matchId provided, verify match exists and is mutual
@@ -107,7 +109,7 @@ class CallService {
   async getCallHistory(userId, options) {
     const result = await callRepository.findCallHistory(userId, options);
     return {
-      calls: result.rows,
+      calls: result.rows.map(c => this._addCostInfo(c)),
       total: result.count,
       page: parseInt(options.page) || 1,
       limit: parseInt(options.limit) || 20,
@@ -120,7 +122,7 @@ class CallService {
     if (call.callerId !== userId && call.receiverId !== userId) {
       throw new Error('You are not a participant in this call');
     }
-    return call;
+    return this._addCostInfo(call);
   }
 
   async getActiveCall(userId) {
@@ -139,11 +141,23 @@ class CallService {
 
     const result = await callRepository.findMatchCalls(matchId, options);
     return {
-      calls: result.rows,
+      calls: result.rows.map(c => this._addCostInfo(c)),
       total: result.count,
       page: parseInt(options.page) || 1,
       limit: parseInt(options.limit) || 20,
     };
+  }
+
+  // ── Calculate and attach cost info to a call ──────────
+  _addCostInfo(call) {
+    const plain = call.toJSON ? call.toJSON() : { ...call };
+    const durationMinutes = plain.duration ? Math.ceil(plain.duration / 60) : 0;
+    const ratePerMinute = RATES[plain.callType] || 0;
+    plain.walletCost = durationMinutes * ratePerMinute;
+    plain.ratePerMinute = ratePerMinute;
+    plain.durationMinutes = durationMinutes;
+    plain.currency = 'INR';
+    return plain;
   }
 }
 

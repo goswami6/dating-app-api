@@ -4,7 +4,7 @@ const walletTransactionRepository = require('../repositories/walletTransactionRe
 
 // ── Rate Configuration (INR per minute) ─────────────────
 const RATES = {
-  chat: 2,          // ₹2 per message
+  chat: 2,          // ₹2 per chat session
   voice_call: 5,    // ₹5 per minute
   video_call: 10,   // ₹10 per minute
 };
@@ -74,12 +74,12 @@ class WalletService {
     }
   }
 
-  // ── Deduct for Chat ─────────────────────────────────────
-  async deductForChat(userId, targetUserId) {
+  // ── Deduct for Chat Session ──────────────────────────────
+  async deductForChatSession(userId, targetUserId) {
     const rate = RATES.chat;
-    return await this._deductBalance(userId, rate, 'chat', `Chat with user #${targetUserId}`, {
+    return await this._deductBalance(userId, rate, 'chat', `Chat session with user #${targetUserId}`, {
       targetUserId,
-      ratePerMessage: rate
+      ratePerSession: rate
     });
   }
 
@@ -130,7 +130,7 @@ class WalletService {
   // ── Get Rates ───────────────────────────────────────────
   getRates() {
     return {
-      chatPerMessage: RATES.chat,
+      chatPerSession: RATES.chat,
       voiceCallPerMinute: RATES.voice_call,
       videoCallPerMinute: RATES.video_call,
       currency: 'INR',

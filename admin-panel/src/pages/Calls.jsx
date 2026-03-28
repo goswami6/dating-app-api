@@ -64,6 +64,8 @@ export default function Calls() {
                   <th>Type</th>
                   <th>Status</th>
                   <th>Duration</th>
+                  <th>Cost (₹)</th>
+                  <th>Rate</th>
                   <th>End Reason</th>
                   <th>Date</th>
                 </tr>
@@ -77,12 +79,14 @@ export default function Calls() {
                     <td><span className="tag">{c.callType === 'video' ? '📹' : '📞'} {c.callType}</span></td>
                     <td><span className={`status-dot ${c.status}`}>{c.status}</span></td>
                     <td>{formatDuration(c.duration)}</td>
+                    <td>{c.walletCost != null ? `₹${c.walletCost}` : '—'}</td>
+                    <td>{c.ratePerMinute ? `₹${c.ratePerMinute}/min` : '—'}</td>
                     <td>{c.endReason || '—'}</td>
                     <td>{new Date(c.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
                 {calls.length === 0 && (
-                  <tr><td colSpan="8" className="empty">No calls found</td></tr>
+                  <tr><td colSpan="10" className="empty">No calls found</td></tr>
                 )}
               </tbody>
             </table>

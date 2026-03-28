@@ -150,7 +150,7 @@ router.get('/balance', walletController.getBalance);
  *                 data:
  *                   type: object
  *                   properties:
- *                     chatPerMessage:
+ *                     chatPerSession:
  *                       type: number
  *                       example: 2
  *                     voiceCallPerMinute:

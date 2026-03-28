@@ -1,5 +1,4 @@
 const matchService = require('../services/matchService');
-const walletService = require('../services/walletService');
 const apiResponse = require('../utils/apiResponse');
 
 class MatchController {
@@ -92,27 +91,7 @@ class MatchController {
                 return apiResponse.error(res, 'Message text is required', 400);
             }
 
-            // Check wallet balance before sending
-            const canChat = await walletService.canChat(userId);
-            if (!canChat) {
-                const wallet = await walletService.getWallet(userId);
-                return apiResponse.error(res, 'Insufficient wallet balance for chat. Please recharge your wallet.', 402, {
-                    balance: wallet.balance,
-                    requiredPerMessage: walletService.getRates().chatPerMessage,
-                    currency: wallet.currency
-                });
-            }
-
             const message = await matchService.sendMessage(matchId, userId, text.trim());
-
-            // Deduct wallet balance for chat
-            const otherUserId = message.senderId === userId ? message.matchId : message.senderId;
-            try {
-                await walletService.deductForChat(userId, otherUserId);
-            } catch (deductErr) {
-                // Message already sent, log deduction failure
-                console.error('Wallet deduction failed for chat:', deductErr.message);
-            }
 
             return apiResponse.success(res, 'Message sent successfully', message, 201);
         } catch (error) {
