@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const adminPaymentController = require('../controllers/adminPaymentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const apiResponse = require('../utils/apiResponse');
 
@@ -572,6 +573,133 @@ router.put('/shop/orders/:id/status', adminController.updateOrderStatus);
  *         description: Paginated wallet transactions
  */
 router.get('/wallet/transactions', adminController.getWalletTransactions);
+
+// ─── Payment Gateway Management ────────────────────
+
+/**
+ * @swagger
+ * /api/admin/payments/gateways:
+ *   get:
+ *     summary: Get Razorpay/PayU gateway configuration
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment gateway config list
+ */
+router.get('/payments/gateways', adminPaymentController.getGatewayConfigs);
+
+/**
+ * @swagger
+ * /api/admin/payments/gateways/{gateway}:
+ *   put:
+ *     summary: Update gateway configuration (enable/disable and credentials)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: gateway
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [razorpay, payu]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               displayName:
+ *                 type: string
+ *               isEnabled:
+ *                 type: boolean
+ *               isSandbox:
+ *                 type: boolean
+ *               config:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Gateway config updated
+ */
+router.put('/payments/gateways/:gateway', adminPaymentController.updateGatewayConfig);
+
+/**
+ * @swagger
+ * /api/admin/payments/orders:
+ *   get:
+ *     summary: Get payment orders list
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: gateway
+ *         schema:
+ *           type: string
+ *           enum: [razorpay, payu]
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: purpose
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payment orders list
+ */
+router.get('/payments/orders', adminPaymentController.getPaymentOrders);
+
+/**
+ * @swagger
+ * /api/admin/payments/orders/{id}/status:
+ *   patch:
+ *     summary: Update payment order status manually
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [created, pending, success, failed, cancelled]
+ *               failureReason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Payment order updated
+ */
+router.patch('/payments/orders/:id/status', adminPaymentController.updatePaymentOrderStatus);
 
 // ─── Subscription Management ──────────────────────
 

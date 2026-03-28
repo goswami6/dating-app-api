@@ -22,6 +22,8 @@ const ShopAddress = require('./shopAddressModel');
 const { ShopOrder, ShopOrderItem } = require('./shopOrderModel');
 const Wallet = require('./walletModel');
 const WalletTransaction = require('./walletTransactionModel');
+const PaymentGatewayConfig = require('./paymentGatewayConfigModel');
+const PaymentOrder = require('./paymentOrderModel');
 const RandomChat = require('./randomChatModel');
 const RandomChatMessage = require('./randomChatMessageModel');
 const Booking = require('./bookingModel');
@@ -49,6 +51,8 @@ const models = {
     ShopOrderItem,
     Wallet,
     WalletTransaction,
+    PaymentGatewayConfig,
+    PaymentOrder,
     RandomChat,
     RandomChatMessage,
     Booking,
@@ -167,6 +171,14 @@ function setupAssociations() {
     // Wallet: User ↔ WalletTransaction
     User.hasMany(WalletTransaction, { foreignKey: 'userId', as: 'WalletTransactions' });
     WalletTransaction.belongsTo(User, { foreignKey: 'userId' });
+
+    // Payments: User ↔ PaymentOrder
+    User.hasMany(PaymentOrder, { foreignKey: 'userId', as: 'PaymentOrders' });
+    PaymentOrder.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+
+    // Payments: WalletTransaction ↔ PaymentOrder
+    WalletTransaction.hasMany(PaymentOrder, { foreignKey: 'walletTransactionId', as: 'PaymentOrders' });
+    PaymentOrder.belongsTo(WalletTransaction, { foreignKey: 'walletTransactionId', as: 'WalletTransaction' });
 
     // RandomChat: User ↔ RandomChat
     User.hasMany(RandomChat, { foreignKey: 'user1Id', as: 'InitiatedRandomChats' });

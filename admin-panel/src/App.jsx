@@ -11,6 +11,7 @@ import Calls from './pages/Calls';
 import Messages from './pages/Messages';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
+import Payments from './pages/Payments';
 import Subscriptions from './pages/Subscriptions';
 import Badges from './pages/Badges';
 import ProductOrders from './pages/ProductOrders';
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
       <Route path="/product-orders" element={<ProtectedRoute><ProductOrders /></ProtectedRoute>} />
       <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+      <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
       <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
       <Route path="/badges" element={<ProtectedRoute><Badges /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

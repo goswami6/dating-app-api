@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const { sequelize, User, MatchCriteria, Message, Subscription, SubscriptionPlan, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, RandomChat, RandomChatMessage, Booking } = require('./src/models');
+const { sequelize, User, MatchCriteria, Message, Subscription, SubscriptionPlan, Call, ShopCategory, ShopProduct, ShopCart, ShopWishlist, ShopAddress, ShopOrder, ShopOrderItem, Wallet, WalletTransaction, PaymentGatewayConfig, PaymentOrder, RandomChat, RandomChatMessage, Booking } = require('./src/models');
 
 async function ensureUserAdminColumn() {
     const queryInterface = sequelize.getQueryInterface();
@@ -249,9 +249,53 @@ async function syncDatabaseSchema() {
     await ShopOrderItem.sync();
     await Wallet.sync();
     await WalletTransaction.sync();
+    await PaymentGatewayConfig.sync();
+    await PaymentOrder.sync();
     await RandomChat.sync();
     await RandomChatMessage.sync();
     await Booking.sync();
+}
+
+async function seedPaymentGateways() {
+    try {
+        const defaults = [
+            {
+                gateway: 'razorpay',
+                displayName: 'Razorpay',
+                isEnabled: false,
+                isSandbox: true,
+                config: {
+                    keyId: '',
+                    keySecret: '',
+                    webhookSecret: ''
+                }
+            },
+            {
+                gateway: 'payu',
+                displayName: 'PayU',
+                isEnabled: false,
+                isSandbox: true,
+                config: {
+                    merchantId: '',
+                    salt: '',
+                    paymentUrl: '',
+                    successUrl: '',
+                    failureUrl: ''
+                }
+            }
+        ];
+
+        for (const gateway of defaults) {
+            await PaymentGatewayConfig.findOrCreate({
+                where: { gateway: gateway.gateway },
+                defaults: gateway
+            });
+        }
+
+        console.log('Payment gateway configs checked/seeded.');
+    } catch (err) {
+        console.error('Error seeding payment gateways:', err.message);
+    }
 }
 
 async function seedSubscriptionPlans() {
@@ -445,6 +489,7 @@ async function initializeDatabase() {
         await syncDatabaseSchema();
         await seedSubscriptionPlans();
         await seedCategoriesAndProducts();
+        await seedPaymentGateways();
         await seedAdminUser();
     } catch (error) {
         console.error('Error initializing database:', error);

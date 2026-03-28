@@ -1,0 +1,119 @@
+.gateway-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.gateway-card {
+  background: #fff;
+  border: 1px solid #ececf4;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 16px;
+}
+
+.gateway-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.gateway-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+
+.gateway-state {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.gateway-state.enabled {
+  background: #d4edda;
+  color: #155724;
+}
+
+.gateway-state.disabled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.gateway-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.gateway-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.gateway-form input,
+.gateway-form select {
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  color: #222;
+}
+
+.gateway-form input:focus,
+.gateway-form select:focus {
+  outline: none;
+  border-color: #e84393;
+}
+
+.gateway-inline {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.gateway-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.payment-chip {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f0f0f5;
+  color: #444;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.payment-chip.razorpay {
+  background: #dbe7ff;
+  color: #1c3f95;
+}
+
+.payment-chip.payu {
+  background: #fff2d9;
+  color: #8b5a00;
+}
+
+.status-actions {
+  display: flex;
+  gap: 6px;
+}
+
+@media (max-width: 768px) {
+  .gateway-inline {
+    grid-template-columns: 1fr;
+  }
+}
